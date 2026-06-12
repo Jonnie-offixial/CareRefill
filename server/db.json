@@ -1,0 +1,198 @@
+{
+  "pharmacies": [
+    {
+      "pharmacy_id": "pharm-001",
+      "pharmacy_name": "Kampala Community Pharmacy",
+      "address": "Plot 42, Kampala Road, Kampala",
+      "phone_number": "+256 701 123456",
+      "color_theme": "teal"
+    },
+    {
+      "pharmacy_id": "pharm-002",
+      "pharmacy_name": "Arua First Care Pharmacy",
+      "address": "Gulu-Arua Highway, Arua City",
+      "phone_number": "+256 772 987654",
+      "color_theme": "emerald"
+    },
+    {
+      "pharmacy_id": "pharm-003",
+      "pharmacy_name": "Elgon Wellness Chemists",
+      "address": "Republic Street, Mbale City",
+      "phone_number": "+256 752 456789",
+      "color_theme": "indigo"
+    }
+  ],
+  "patients": [
+    {
+      "patient_id": "pat-001",
+      "pharmacy_id": "pharm-001",
+      "full_name": "Abraham Mulondo",
+      "phone_number": "+256 788 123456",
+      "chronic_condition": "Diabetes",
+      "preferred_channel": "WhatsApp",
+      "status": "Active",
+      "created_at": "2026-05-15T08:00:00Z"
+    },
+    {
+      "patient_id": "pat-002",
+      "pharmacy_id": "pharm-001",
+      "full_name": "Sarah Namubiru",
+      "phone_number": "+256 701 445566",
+      "chronic_condition": "Hypertension",
+      "preferred_channel": "SMS",
+      "status": "Active",
+      "created_at": "2026-05-20T09:30:00Z"
+    },
+    {
+      "patient_id": "pat-003",
+      "pharmacy_id": "pharm-001",
+      "full_name": "John Mugisha",
+      "phone_number": "+256 752 998877",
+      "chronic_condition": "HIV/ARVs",
+      "preferred_channel": "Both",
+      "status": "Active",
+      "created_at": "2026-05-10T11:00:00Z"
+    },
+    {
+      "patient_id": "pat-004",
+      "pharmacy_id": "pharm-002",
+      "full_name": "Lillian Atim",
+      "phone_number": "+256 773 112233",
+      "chronic_condition": "Hypertension",
+      "preferred_channel": "SMS",
+      "status": "Active",
+      "created_at": "2026-05-18T14:15:00Z"
+    },
+    {
+      "patient_id": "pat-005",
+      "pharmacy_id": "pharm-002",
+      "full_name": "Moses Okello",
+      "phone_number": "+256 703 667788",
+      "chronic_condition": "Diabetes",
+      "preferred_channel": "WhatsApp",
+      "status": "Active",
+      "created_at": "2026-05-22T10:00:00Z"
+    }
+  ],
+  "medications": [
+    {
+      "medication_id": "med-001",
+      "patient_id": "pat-001",
+      "medication_name": "Metformin",
+      "dosage": "500mg twice daily with meals",
+      "duration_days": 30,
+      "last_refill_date": "2026-05-15T08:00:00Z",
+      "next_refill_date": "2026-06-14T08:00:00Z"
+    },
+    {
+      "medication_id": "med-002",
+      "patient_id": "pat-002",
+      "medication_name": "Amlodipine",
+      "dosage": "10mg once daily in the morning",
+      "duration_days": 30,
+      "last_refill_date": "2026-05-20T09:30:00Z",
+      "next_refill_date": "2026-06-19T09:30:00Z"
+    },
+    {
+      "medication_id": "med-003",
+      "patient_id": "pat-003",
+      "medication_name": "Acriptega (TLD)",
+      "dosage": "1 tablet once daily before bed",
+      "duration_days": 90,
+      "last_refill_date": "2026-03-14T11:00:00Z",
+      "next_refill_date": "2026-06-12T11:00:00Z"
+    },
+    {
+      "medication_id": "med-004",
+      "patient_id": "pat-004",
+      "medication_name": "Losartan",
+      "dosage": "50mg once daily with water",
+      "duration_days": 30,
+      "last_refill_date": "2026-05-18T14:15:00Z",
+      "next_refill_date": "2026-06-17T14:15:00Z"
+    },
+    {
+      "medication_id": "med-005",
+      "patient_id": "pat-005",
+      "medication_name": "Insulin Glargine (Lantus)",
+      "dosage": "10 units subcutaneously once daily",
+      "duration_days": 21,
+      "last_refill_date": "2026-05-22T10:00:00Z",
+      "next_refill_date": "2026-06-12T10:00:00Z"
+    }
+  ],
+  "reminders": [
+    {
+      "reminder_id": "rem-001",
+      "patient_id": "pat-001",
+      "medication_id": "med-001",
+      "reminder_date": "2026-06-07T08:00:00Z",
+      "channel": "WhatsApp",
+      "status": "Sent",
+      "message": "Hello Abraham Mulondo, this is a reminder from Kampala Community Pharmacy. Your medication for Metformin will run out on 2026-06-14. Please visit us for your refill. Thank you.",
+      "sent_at": "2026-06-07T08:00:05Z"
+    },
+    {
+      "reminder_id": "rem-002",
+      "patient_id": "pat-003",
+      "medication_id": "med-003",
+      "reminder_date": "2026-06-05T08:00:00Z",
+      "channel": "WhatsApp",
+      "status": "Sent",
+      "message": "Dear John Mugisha, as a friendly reminder from Kampala Community Pharmacy, your HIV/ARVs treatment Acriptega (TLD) is due on 2026-06-12. Regular adherence is key to your health. We have packages ready for pickup.",
+      "sent_at": "2026-06-05T08:02:11Z"
+    },
+    {
+      "reminder_id": "rem-003",
+      "patient_id": "pat-003",
+      "medication_id": "med-003",
+      "reminder_date": "2026-06-09T08:00:00Z",
+      "channel": "SMS",
+      "status": "Sent",
+      "message": "Hello John Mugisha. Plot 42 reminder: Your Acriptega (TLD) prescription is refilling in 3 days (June 12). Drop by Kampala Community Pharmacy or call us for delivery details.",
+      "sent_at": "2026-06-09T08:05:43Z"
+    }
+  ],
+  "users": [
+    {
+      "user_id": "usr-001",
+      "pharmacy_id": "pharm-001",
+      "full_name": "Dr. Sarah Mukasa",
+      "email": "sarah@kcp.ug",
+      "role": "Pharmacist"
+    },
+    {
+      "user_id": "usr-002",
+      "pharmacy_id": "pharm-002",
+      "full_name": "Dr. Emmanuel Okot",
+      "email": "emmanuel@arua-first.ug",
+      "role": "Pharmacist"
+    }
+  ],
+  "templates": {
+    "pharm-001": {
+      "Hypertension": "Hello {patient_name}, this is private reminder from {pharmacy_name}. Your medication for {med_name} will run out on {next_refill_date}. Please visit Plot 42 or call +256 701 123456 to arrange pick-up. Stay healthy!",
+      "Diabetes": "Dear {patient_name}, this is {pharmacy_name}. Your {med_name} refill is due on {next_refill_date}. We have pre-packed your dosage. Please stop by or call us if you need help with transport. Thank you.",
+      "HIV/ARVs": "Dear {patient_name}, friendly reminder from {pharmacy_name}. Your wellness package for {med_name} is ready for pick-up on {next_refill_date}. Thank you for trusting Kampala Community Pharmacy with your health support.",
+      "General": "Hello {patient_name}, your chronic medication {med_name} from {pharmacy_name} will run out on {next_refill_date}. Please stop by for your refill. Thank you."
+    },
+    "pharm-002": {
+      "Hypertension": "Amlodipine/Losartan reminder for {patient_name} from {pharmacy_name}. Next refill date is {next_refill_date}. Please visit our branch on Gulu-Arua Road.",
+      "Diabetes": "Hello {patient_name}, your diabetes refill {med_name} at {pharmacy_name} is due on {next_refill_date}. Let us help you stay in control of your blood sugar.",
+      "HIV/ARVs": "{patient_name}, friendly health reminder from {pharmacy_name} for medication {med_name} due {next_refill_date}. We open from 8:00 AM to 8:30 PM.",
+      "General": "Hello {patient_name}, please recuer to refill {med_name} on or before {next_refill_date} at {pharmacy_name}."
+    },
+    "pharm-003": {
+      "Hypertension": "Hello {patient_name}, please remember your Hypertension refill of {med_name} at Elgon Wellness Mbale on {next_refill_date}.",
+      "Diabetes": "Refill notice: {patient_name}, your {med_name} at Elgon Chemists Mbale is due {next_refill_date}.",
+      "HIV/ARVs": "Wellness reminder for {patient_name}. Your medication {med_name} from Elgon Chemistry Mbale is due on {next_refill_date}.",
+      "General": "Medication Refill alert for {patient_name}: {med_name} refill date {next_refill_date} at Elgon Chemists."
+    }
+  },
+  "config": {
+    "whatsapp_enabled": true,
+    "sms_enabled": true,
+    "reminder_sender_phone": "+256 701 113355",
+    "use_ai_customizer": true
+  }
+}
