@@ -486,8 +486,8 @@ export default function App() {
 
       {/* Left Sidebar Menu Drawer (Visible on md+ or conditional drawer on mobile) */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-white text-slate-800 flex flex-col justify-between transform transition-transform duration-300 ease-in-out shrink-0
-        md:relative md:translate-x-0 border-r border-lime-150
+        fixed inset-y-0 left-0 z-40 w-64 bg-[#062c16] text-emerald-100 flex flex-col justify-between transform transition-transform duration-300 ease-in-out shrink-0
+        md:relative md:translate-x-0 border-r border-[#041d0e]
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         
@@ -495,26 +495,24 @@ export default function App() {
         <div className="flex-1 flex flex-col overflow-y-auto">
           
           {/* Logo Brand coordinates */}
-          <div className="p-4 flex items-center gap-2.5 border-b border-lime-150 bg-lime-50/20">
-            <div className="w-8 h-8 rounded-xl bg-[#84CC16] flex items-center justify-center shadow-xs shrink-0 select-none overflow-hidden">
-              <span className="text-white font-black text-sm">CR</span>
-            </div>
+          <div className="p-4 flex items-center gap-2.5 border-b border-[#041d0e] bg-emerald-950/40">
+            <img src={logoUrl} alt="CareRefill Logo" className="w-8 h-8 rounded-xl object-contain shrink-0" />
             <div>
-              <h1 className="font-sans font-black tracking-tight text-slate-900 text-sm">CareRefill</h1>
-              <span className="text-[10px] text-[#71B20A] uppercase font-bold tracking-wider block">Workspace Desk</span>
+              <h1 className="font-sans font-black tracking-tight text-white text-sm">CareRefill</h1>
+              <span className="text-[10px] text-emerald-300 uppercase font-black tracking-wider block">Workspace Desk</span>
             </div>
           </div>
 
           {/* Active Tenant branch selector dropdown */}
-          <div className="px-4 py-3 border-b border-lime-150 bg-lime-50/10">
-            <label className="text-[9px] text-[#71B20A] font-bold uppercase tracking-widest block mb-1">Active Office Center Log</label>
+          <div className="px-4 py-3 border-b border-[#041d0e] bg-emerald-950/20">
+            <label className="text-[9px] text-emerald-300 font-bold uppercase tracking-widest block mb-1">Active Office Center Log</label>
             <select
-              value={selectedPharmacyId}
-              onChange={(e) => setSelectedPharmacyId(e.target.value)}
-              className="w-full bg-white text-slate-800 text-xs p-2 rounded-xl focus:outline-none border border-lime-200 font-medium cursor-pointer shadow-3xs"
+               value={selectedPharmacyId}
+               onChange={(e) => setSelectedPharmacyId(e.target.value)}
+               className="w-full bg-[#041d0e] text-white text-xs p-2 rounded-xl focus:outline-none border border-emerald-800 font-medium cursor-pointer shadow-3xs"
             >
               {pharmacies.map((p) => (
-                <option key={p.pharmacy_id} value={p.pharmacy_id} className="text-gray-900 bg-white">
+                <option key={p.pharmacy_id} value={p.pharmacy_id} className="text-white bg-[#062c16]">
                   {p.pharmacy_name}
                 </option>
               ))}
@@ -529,7 +527,7 @@ export default function App() {
 
               return (
                 <div key={group.group_title} className="space-y-1">
-                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-[#71B20A] tracking-widest block opacity-92">
+                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-300 tracking-widest block opacity-92">
                     {group.group_title}
                   </span>
                   <div className="space-y-0.5">
@@ -545,12 +543,12 @@ export default function App() {
                           className={`
                             w-full text-left py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer
                             ${isActive 
-                              ? 'bg-[#84CC16] text-white font-bold shadow-md shadow-lime-300/40 scale-[0.98]' 
-                              : 'text-slate-700 hover:bg-lime-50/40 hover:text-[#71B20A]'
+                              ? 'bg-[#84CC16] text-white font-bold shadow-md shadow-lime-950/40 scale-[0.98]' 
+                              : 'text-emerald-100 hover:bg-emerald-900/50 hover:text-white'
                             }
                           `}
                         >
-                          <link.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#71B20A]'}`} />
+                          <link.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-emerald-300'}`} />
                           <span>{link.label}</span>
                         </button>
                       );
@@ -563,18 +561,18 @@ export default function App() {
             {/* Special System admin link only for admin session roles */}
             {isAdminUser && (
               <div className="space-y-1 pt-1">
-                <span className="text-[9px] pl-3.5 uppercase font-extrabold text-[#71B20A] tracking-widest block opacity-92">Super-Admin</span>
+                <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-300 tracking-widest block opacity-92">Super-Admin</span>
                 <button
                   onClick={() => handleSidebarClick('admin')}
                   className={`
                     w-full text-left py-2 px-3.5 rounded-xl text-xs font-black flex items-center gap-2.5 transition-all cursor-pointer
                     ${activeTab === 'admin' 
                       ? 'bg-amber-400 text-slate-900 font-extrabold shadow-sm' 
-                      : 'text-slate-700 hover:bg-lime-50/40 hover:text-[#71B20A]'
+                      : 'text-emerald-100 hover:bg-emerald-900/50 hover:text-white'
                     }
                   `}
                 >
-                  <Shield className="w-4 h-4 shrink-0 text-amber-600" />
+                  <Shield className="w-4 h-4 shrink-0 text-amber-500" />
                   <span>Admin Panel 🔑</span>
                 </button>
               </div>
@@ -584,22 +582,22 @@ export default function App() {
         </div>
 
         {/* Sidebar Footer session badge */}
-        <div className="p-4 border-t border-lime-150 bg-lime-50/20 space-y-3 shrink-0">
+        <div className="p-4 border-t border-[#041d0e] bg-emerald-950/40 space-y-3 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#84CC16] text-white flex items-center justify-center font-black text-xs shrink-0 select-none shadow-xs">
-              {(currentUser.email || 'VI').slice(0, 2).toUpperCase()}
+              {(currentUser?.email || 'VI').slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-800 truncate">{currentUser.email || 'Vianne Jonny'}</p>
-              <p className="text-[9px] text-[#71B20A] tracking-wide font-mono uppercase truncate">{currentUser.role || 'Program staff'}</p>
+              <p className="text-xs font-bold text-white truncate">{currentUser?.email || 'Vianne Jonny'}</p>
+              <p className="text-[9px] text-emerald-300 tracking-wide font-mono uppercase truncate">{currentUser?.role || 'Program staff'}</p>
             </div>
           </div>
           
           <button
             onClick={handleSignOut}
-            className="w-full bg-white hover:bg-rose-550 hover:text-white hover:border-rose-400 text-[10px] tracking-widest font-black uppercase text-slate-700 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[#84CC16]/30 shadow-3xs"
+            className="w-full bg-[#041d0e] hover:bg-rose-600 text-[10px] tracking-widest font-black uppercase text-emerald-100 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-emerald-800 shadow-3xs"
           >
-            <LogOut className="w-3 h-3 text-rose-500" />
+            <LogOut className="w-3 h-3 text-emerald-300 hover:text-white" />
             <span>Sign Out Session</span>
           </button>
         </div>

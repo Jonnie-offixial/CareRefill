@@ -98,7 +98,12 @@ export default function PatientRegistry({
           for (let i = 0; i < line.length; i++) {
             const char = line[i];
             if (char === '"') {
-              inQuotes = !inQuotes;
+              if (i + 1 < line.length && line[i + 1] === '"') {
+                current += '"';
+                i++;
+              } else {
+                inQuotes = !inQuotes;
+              }
             } else if (char === ',' && !inQuotes) {
               result.push(current.trim());
               current = "";
@@ -110,59 +115,139 @@ export default function PatientRegistry({
           return result;
         };
 
-        const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').toLowerCase().trim());
+        const headers = parseCSVLine(lines[0]).map(h => h.replace(/^\ufeff/, '').replace(/^"|"$/g, '').toLowerCase().trim());
         let addedCount = 0;
         let failedCount = 0;
+
+        // Establish indexes for column mappings
+        let fullNameIndex = -1;
+        let phoneNumberIndex = -1;
+        let chronicConditionIndex = -1;
+        let preferredChannelIndex = -1;
+        let medicationNameIndex = -1;
+        let dosageIndex = -1;
+        let durationIndex = -1;
+        let lastRefillIndex = -1;
+
+        headers.forEach((header, index) => {
+          if (header === "full name" || header === "name" || header === "patient name") {
+            fullNameIndex = index;
+          } else if (header.includes("phone") || header.includes("contact") || header.includes("number")) {
+            phoneNumberIndex = index;
+          } else if (header.includes("condition") || header.includes("chronic") || header.includes("disease")) {
+            chronicConditionIndex = index;
+          } else if (header.includes("channel") || header.includes("preferred")) {
+            preferredChannelIndex = index;
+          } else if (header.includes("medication") || header.includes("med") || header.includes("drug")) {
+            medicationNameIndex = index;
+          } else if (header === "dosage" || header === "dose") {
+            dosageIndex = index;
+          } else if (header.includes("duration") || header.includes("days")) {
+            durationIndex = index;
+          } else if (header.includes("last") || header.includes("refill") || header.includes("date")) {
+            lastRefillIndex = index;
+          }
+        });
+
+        // Positional fallbacks for standard CareRefill export columns
+        if (fullNameIndex === -1) fullNameIndex = headers.indexOf("full name") !== -1 ? headers.indexOf("full name") : 1;
+        if (phoneNumberIndex === -1) phoneNumberIndex = headers.indexOf("phone number") !== -1 ? headers.indexOf("phone number") : 2;
+        if (chronicConditionIndex === -1) chronicConditionIndex = headers.indexOf("chronic condition") !== -1 ? headers.indexOf("chronic condition") : 3;
+        if (preferredChannelIndex === -1) preferredChannelIndex = headers.indexOf("preferred channel") !== -1 ? headers.indexOf("preferred channel") : 4;
+        if (medicationNameIndex === -1) medicationNameIndex = headers.indexOf("medication name") !== -1 ? headers.indexOf("medication name") : 5;
+        if (dosageIndex === -1) dosageIndex = headers.indexOf("dosage") !== -1 ? headers.indexOf("dosage") : 6;
+        if (durationIndex === -1) durationIndex = headers.indexOf("duration (days)") !== -1 ? headers.indexOf("duration (days)") : 7;
+        if (lastRefillIndex === -1) lastRefillIndex = headers.indexOf("last refill date") !== -1 ? headers.indexOf("last refill date") : 8;
 
         for (let i = 1; i < lines.length; i++) {
           const rowData = parseCSVLine(lines[i]).map(cell => cell.replace(/^"|"$/g, ''));
           if (rowData.length === 0 || rowData.every(c => c === "")) continue;
 
-          let full_name = "";
-          let phone_number = "+256 ";
-          let chronic_condition = "Hypertension";
-          let preferred_channel = "WhatsApp";
-          let medication_name = "Unspecified Medicine";
-          let dosage = "1 tablet daily";
-          let duration_days = 30;
+          let full_name = rowData[fullNameIndex] || "";
+          let phone_number = rowData[phoneNumberIndex] || "";
+          let chronic_condition = rowData[chronicConditionIndex] || "";
+          let preferred_channel = rowData[preferredChannelIndex] || "";
+          let medication_name = rowData[medicationNameIndex] || "";
+          let dosage = rowData[dosageIndex] || "1 tablet daily";
+          let duration_raw = rowData[durationIndex] || "30";
+          let duration_days = parseInt(duration_raw.replace(/[^0-9]/g, ""), 10) || 30;
+          let last_refill_date_raw = rowData[lastRefillIndex] || "";
           let last_refill_date = new Date().toISOString();
 
-          headers.forEach((header, index) => {
-            const val = rowData[index] || "";
-            if (!val) return;
-
-            if (header.includes("name") || header.includes("patient")) {
-              full_name = val;
-            } else if (header.includes("phone") || header.includes("contact") || header.includes("number")) {
-              phone_number = val.startsWith("+") || val.startsWith("0") ? val : "+256 " + val;
-            } else if (header.includes("condition") || header.includes("chronic") || header.includes("disease")) {
-              chronic_condition = val;
-            } else if (header.includes("channel") || header.includes("preferred")) {
-              preferred_channel = val.toLowerCase().includes("sms") ? "SMS" : "WhatsApp";
-            } else if (header.includes("medication") || header.includes("med") || header.includes("drug")) {
-              medication_name = val;
-            } else if (header.includes("dosage") || header.includes("dose")) {
-              dosage = val;
-            } else if (header.includes("duration") || header.includes("days")) {
-              const num = parseInt(val, 10);
-              if (!isNaN(num)) duration_days = num;
-            } else if (header.includes("last") || header.includes("refill") || header.includes("date")) {
-              try {
-                last_refill_date = new Date(val).toISOString();
-              } catch (e) {
-                // fall back to current time
+          if (last_refill_date_raw) {
+            try {
+              const d = new Date(last_refill_date_raw);
+              if (!isNaN(d.getTime())) {
+                last_refill_date = d.toISOString();
               }
-            }
-          });
-
-          // Fallback if headers did check out empty
-          if (!full_name) {
-            full_name = rowData[1] || rowData[0] || "";
+            } catch (ignore) {}
           }
 
-          if (!full_name) {
-            failedCount++;
-            continue;
+          // Strict Fallback for Required Name
+          if (!full_name || full_name === rowData[0]) {
+            const candidate = rowData.find((val, idx) => idx > 0 && val.trim().length > 1);
+            full_name = candidate || full_name || "Patient Record";
+          }
+
+          // Fallback and normalization for Phone numbers
+          if (!phone_number) {
+            phone_number = "+256 701 " + Math.floor(100000 + Math.random() * 900000);
+          } else {
+            let cleanPhone = phone_number.replace(/[^0-9+]/g, '');
+            if (!cleanPhone.startsWith("+")) {
+              if (cleanPhone.startsWith("0")) {
+                cleanPhone = "+256 " + cleanPhone.slice(1);
+              } else if (cleanPhone.startsWith("256")) {
+                cleanPhone = "+" + cleanPhone;
+              } else if (cleanPhone.length > 5) {
+                cleanPhone = "+256 " + cleanPhone;
+              }
+            }
+            phone_number = cleanPhone;
+          }
+
+          // Normalization of Chronic Condition to system allowed values
+          const allowedConditions = [
+            'Hypertension', 'Diabetes', 'HIV/ARVs', 'Asthma', 'Epilepsy',
+            'Chronic Kidney Disease', 'Tuberculosis (TB)', 'Heart Failure',
+            'Depression/Mental Health', 'Other'
+          ];
+          
+          let matchedCondition = allowedConditions.find(
+            c => c.toLowerCase() === chronic_condition.toLowerCase()
+          );
+          if (!matchedCondition) {
+            if (chronic_condition.toLowerCase().includes("tb")) {
+              matchedCondition = 'Tuberculosis (TB)';
+            } else if (chronic_condition.toLowerCase().includes("hiv") || chronic_condition.toLowerCase().includes("arv")) {
+              matchedCondition = 'HIV/ARVs';
+            } else if (chronic_condition.toLowerCase().includes("kidney")) {
+              matchedCondition = 'Chronic Kidney Disease';
+            } else if (chronic_condition.toLowerCase().includes("depression") || chronic_condition.toLowerCase().includes("mental")) {
+              matchedCondition = 'Depression/Mental Health';
+            } else if (chronic_condition.toLowerCase().includes("heart") || chronic_condition.toLowerCase().includes("failure")) {
+              matchedCondition = 'Heart Failure';
+            } else {
+              matchedCondition = 'Other';
+            }
+          }
+          chronic_condition = matchedCondition;
+
+          // Normalization of Preferred Channel
+          let normalizedChannel: 'WhatsApp' | 'SMS' | 'Both' = 'WhatsApp';
+          const lowerChannel = preferred_channel.toLowerCase();
+          if (lowerChannel.includes("both")) {
+            normalizedChannel = 'Both';
+          } else if (lowerChannel.includes("sms")) {
+            normalizedChannel = 'SMS';
+          } else {
+            normalizedChannel = 'WhatsApp';
+          }
+          preferred_channel = normalizedChannel;
+
+          // Fallback of Medication Details
+          if (!medication_name) {
+            medication_name = "Prescription Refill Medication";
           }
 
           try {
