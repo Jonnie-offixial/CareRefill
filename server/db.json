@@ -194,5 +194,88 @@
     "sms_enabled": true,
     "reminder_sender_phone": "+256 701 113355",
     "use_ai_customizer": true
-  }
+  },
+  "feedback": [],
+  "progress_metrics": [],
+  "appointments": [
+    {
+      "appointment_id": "apt-hist-001",
+      "patient_id": "pat-001",
+      "doctor_name": "Dr. Sarah Mukasa",
+      "appointment_date": "2026-06-01T10:00:00Z",
+      "reason": "Blood pressure quarterly evaluation & Metformin refill check",
+      "status": "Successful"
+    },
+    {
+      "appointment_id": "apt-hist-002",
+      "patient_id": "pat-002",
+      "doctor_name": "Dr. Emmanuel Okot",
+      "appointment_date": "2026-06-04T14:30:00Z",
+      "reason": "Routine hypertension tracking",
+      "status": "Missed"
+    },
+    {
+      "appointment_id": "apt-hist-003",
+      "patient_id": "pat-003",
+      "doctor_name": "Dr. Sarah Mukasa",
+      "appointment_date": "2026-06-08T11:00:00Z",
+      "reason": "Adherence barrier consultation",
+      "status": "Discarded"
+    },
+    {
+      "appointment_id": "apt-hist-004",
+      "patient_id": "pat-004",
+      "doctor_name": "Dr. Emmanuel Okot",
+      "appointment_date": "2026-06-10T15:00:00Z",
+      "reason": "Asthma inhaler check-in",
+      "status": "Successful"
+    },
+    {
+      "appointment_id": "apt-hist-005",
+      "patient_id": "pat-005",
+      "doctor_name": "Dr. Sarah Mukasa",
+      "appointment_date": "2026-06-11T09:15:00Z",
+      "reason": "Therapeutic plan calibration",
+      "status": "Discarded"
+    }
+  ],
+  "consultations": [],
+  "patient_replies": [
+    {
+      "reply_id": "rep-1781644608524",
+      "patient_id": "pat-003",
+      "pharmacy_id": "pharm-001",
+      "option_selected": null,
+      "reply_text": "SYSTEM_TRIGGER_REMINDER",
+      "channel": "WhatsApp",
+      "received_at": "2026-06-16T21:16:48.524Z"
+    },
+    {
+      "reply_id": "rep-1781644615570",
+      "patient_id": "pat-001",
+      "pharmacy_id": "pharm-001",
+      "option_selected": null,
+      "reply_text": "SYSTEM_TRIGGER_REMINDER",
+      "channel": "WhatsApp",
+      "received_at": "2026-06-16T21:16:55.570Z"
+    },
+    {
+      "reply_id": "rep-1781644620558",
+      "patient_id": "pat-001",
+      "pharmacy_id": "pharm-001",
+      "option_selected": null,
+      "reply_text": "SYSTEM_TRIGGER_REMINDER",
+      "channel": "WhatsApp",
+      "received_at": "2026-06-16T21:17:00.559Z"
+    },
+    {
+      "reply_id": "rep-1781644622816",
+      "patient_id": "pat-001",
+      "pharmacy_id": "pharm-001",
+      "option_selected": null,
+      "reply_text": "SYSTEM_TRIGGER_REMINDER",
+      "channel": "WhatsApp",
+      "received_at": "2026-06-16T21:17:02.816Z"
+    }
+  ]
 }

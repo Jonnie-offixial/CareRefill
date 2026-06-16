@@ -629,7 +629,7 @@ app.get("/api/appointments", async (req, res) => {
 });
 
 app.post("/api/appointments", async (req, res) => {
-  const { patient_id, doctor_name, appointment_date, reason } = req.body;
+  const { patient_id, doctor_name, appointment_date, reason, status } = req.body;
   if (!patient_id || !doctor_name || !appointment_date || !reason) {
     return res.status(400).json({ error: "Patient ID, clinician name, appointment date and reason are required." });
   }
@@ -638,7 +638,8 @@ app.post("/api/appointments", async (req, res) => {
       patient_id,
       doctor_name,
       appointment_date,
-      reason
+      reason,
+      status
     });
     res.json({ success: true, appointment: freshAppointment });
   } catch (err: any) {

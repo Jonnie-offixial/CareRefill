@@ -841,6 +841,7 @@ export async function createAppointment(payload: {
   doctor_name: string;
   appointment_date: string;
   reason: string;
+  status?: string;
 }): Promise<any> {
   const newApt = {
     appointment_id: `ap-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -848,7 +849,7 @@ export async function createAppointment(payload: {
     doctor_name: payload.doctor_name,
     appointment_date: payload.appointment_date,
     reason: payload.reason,
-    status: "Scheduled",
+    status: payload.status || "Successful",
     created_at: new Date().toISOString()
   };
 

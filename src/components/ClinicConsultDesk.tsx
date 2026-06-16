@@ -100,6 +100,7 @@ export default function ClinicConsultDesk({
   const [aptDoctorName, setAptDoctorName] = useState('Dr. Sarah Mukasa');
   const [aptDate, setAptDate] = useState('');
   const [aptReason, setAptReason] = useState('Routine chronic review');
+  const [aptStatus, setAptStatus] = useState<'Successful' | 'Missed' | 'Discarded'>('Successful');
   const [creatingApt, setCreatingApt] = useState(false);
 
   // Load clinic data
@@ -258,7 +259,8 @@ export default function ClinicConsultDesk({
           patient_id: aptPatientId,
           doctor_name: aptDoctorName,
           appointment_date: new Date(aptDate).toISOString(),
-          reason: aptReason
+          reason: aptReason,
+          status: aptStatus
         })
       });
       if (res.ok) {
@@ -832,6 +834,20 @@ export default function ClinicConsultDesk({
                         className="w-full bg-white border border-gray-250 rounded-xl px-3 py-2 text-xs font-medium text-slate-850 focus:outline-none focus:ring-1 focus:ring-brand-green"
                       />
                     </div>
+
+                    {/* Status Outcome selection */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Outcome Status (Passed Only)</label>
+                      <select
+                        value={aptStatus}
+                        onChange={(e) => setAptStatus(e.target.value as any)}
+                        className="w-full bg-white border border-gray-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-green"
+                      >
+                        <option value="Successful">Successful (Completed)</option>
+                        <option value="Missed">Missed Outcome</option>
+                        <option value="Discarded">Discarded (Cancelled)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="flex gap-2 justify-end pt-2 border-t">
@@ -847,80 +863,62 @@ export default function ClinicConsultDesk({
                       disabled={creatingApt}
                       className="bg-brand-green hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs cursor-pointer transition shadow-3xs disabled:opacity-50"
                     >
-                      {creatingApt ? "Confirming..." : "Publish & Confirm Appointment"}
+                      {creatingApt ? "Confirming..." : "Publish Passed Appointment Log"}
                     </button>
                   </div>
                 </form>
               )}
 
-              {appointments.length === 0 ? (
-                <div className="p-12 text-center text-slate-400 font-sans">
-                  <Calendar className="w-10 h-10 opacity-30 mx-auto mb-2 text-indigo-600" />
-                  <p className="font-semibold text-slate-700">No scheduled appointments found</p>
-                  <p className="text-xs mt-0.5">When sandbox patient-actors record requested appointments, they appear instantly here.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {appointments.map((a) => {
-                    const patientObj = patients.find(p => p.patient_id === a.patient_id);
-                    return (
-                      <div key={a.appointment_id} className="bg-slate-50 border p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 font-sans text-xs">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-850 text-sm">
-                              {patientObj?.full_name || 'Generic Patient'}
-                            </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                              (a.status === 'Confirmed' || a.status === 'Approved') ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                              a.status === 'Completed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                              a.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-100' :
-                              'bg-amber-50 text-amber-700 border-amber-100'
-                            }`}>
-                              {a.status === 'Confirmed' ? 'Approved' : a.status}
-                            </span>
+              {(() => {
+                const displayedAppointments = appointments.filter((a) =>
+                  ['Successful', 'Completed', 'Missed', 'Discarded', 'Cancelled'].includes(a.status)
+                );
+                return displayedAppointments.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 font-sans">
+                    <Calendar className="w-10 h-10 opacity-30 mx-auto mb-2 text-indigo-600" />
+                    <p className="font-semibold text-slate-700">No passed appointments found</p>
+                    <p className="text-xs mt-0.5">When sandbox patient-actors record passed appointments, they appear here instantly.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {displayedAppointments.map((a) => {
+                      const patientObj = patients.find(p => p.patient_id === a.patient_id);
+                      const displayStatus = a.status === 'Completed' ? 'Successful' : (a.status === 'Cancelled' ? 'Discarded' : a.status);
+                      return (
+                        <div key={a.appointment_id} className="bg-slate-50 border p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 font-sans text-xs">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-850 text-sm">
+                                {patientObj?.full_name || 'Generic Patient'}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                displayStatus === 'Successful' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                displayStatus === 'Missed' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                'bg-rose-50 text-rose-700 border-rose-100'
+                              }`}>
+                                {displayStatus}
+                              </span>
+                            </div>
+                            
+                            <p className="text-gray-500 font-medium leading-relaxed">
+                              <strong>Reason:</strong> {a.reason}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-400 pt-1">
+                              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> clinician: {a.doctor_name}</span>
+                              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(a.appointment_date).toLocaleString()}</span>
+                            </div>
                           </div>
-                          
-                          <p className="text-gray-500 font-medium leading-relaxed">
-                            <strong>Reason:</strong> {a.reason}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-400 pt-1">
-                            <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> clinician: {a.doctor_name}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(a.appointment_date).toLocaleString()}</span>
-                          </div>
-                        </div>
 
-                        {/* Action buttons */}
-                        <div className="flex gap-2 shrink-0 self-end sm:self-auto">
-                          {(a.status === 'Requested' || a.status === 'Pending') && (
-                            <>
-                              <button
-                                onClick={() => handleUpdateAppointmentStatus(a.appointment_id, 'Approved')}
-                                className="bg-emerald-450 hover:bg-emerald-500 text-slate-950 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer transition shadow-xs"
-                              >
-                                Approve Request
-                              </button>
-                              <button
-                                onClick={() => handleUpdateAppointmentStatus(a.appointment_id, 'Cancelled')}
-                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer transition"
-                              >
-                                Decline
-                              </button>
-                            </>
-                          )}
-                          {(a.status === 'Confirmed' || a.status === 'Approved') && (
-                            <button
-                              onClick={() => handleUpdateAppointmentStatus(a.appointment_id, 'Completed')}
-                              className="bg-slate-800 hover:bg-slate-950 text-white rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer transition"
-                            >
-                              Mark Completed
-                            </button>
-                          )}
+                          {/* Passed appointments are historical logs, no actionable transition buttons are needed */}
+                          <div className="text-[10px] text-slate-400 font-semibold italic shrink-0">
+                            Historical Outcome Logged ✓
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
