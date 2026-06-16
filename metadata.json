@@ -1,5 +1,5 @@
 {
-  "name": "Pharmacy Refill Reminder Bot",
+  "name": "CareRefill",
   "description": "An automated SMS and WhatsApp patient engagement and medication refill reminder application for community pharmacies to increase adherence and customer retention.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

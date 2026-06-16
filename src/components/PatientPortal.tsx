@@ -39,7 +39,7 @@ export default function PatientPortal({
   colorTheme,
   onRefreshPatients
 }: PatientPortalProps) {
-  // Current Selected Active Patient Simulation state
+  // Current Selected Active Patient state
   const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   
   // Data lists
@@ -82,6 +82,11 @@ export default function PatientPortal({
   const [fbComment, setFbComment] = useState('');
   const [fbCategory, setFbCategory] = useState<'Reminders' | 'Refills' | 'Pharmacy Service' | 'Other'>('Reminders');
 
+  // Two-Way WhatsApp states
+  const [repliesList, setRepliesList] = useState<any[]>([]);
+  const [incomingText, setIncomingText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+
   // Load all patient portal records
   const loadPortalData = async (patId: string) => {
     if (!patId) return;
@@ -90,6 +95,12 @@ export default function PatientPortal({
       const mRes = await fetch(`/api/progress-metrics?patient_id=${patId}`);
       if (mRes.ok) {
         setMetrics(await mRes.json());
+      }
+      
+      // Fetch Replies list
+      const repRes = await fetch(`/api/patients/${patId}/replies`);
+      if (repRes.ok) {
+        setRepliesList(await repRes.json());
       }
       
       // Fetch Appointments
@@ -136,7 +147,7 @@ export default function PatientPortal({
   const getDaysRemainingText = () => {
     if (!med) return { days: 0, text: "No Active Medication Cycle", status: 'none', percent: 0 };
     const nextDate = new Date(med.next_refill_date);
-    const today = new Date("2026-06-12T08:00:00Z"); // Locked simulation focal point
+    const today = new Date("2026-06-12T08:00:00Z"); // Locked treatment calendar reference point
     
     nextDate.setHours(8, 0, 0, 0);
     today.setHours(8, 0, 0, 0);
@@ -191,6 +202,32 @@ export default function PatientPortal({
       console.error(err);
     } finally {
       setSubmittingMetric(false);
+    }
+  };
+
+  const handleSendReply = async (optionValue: string) => {
+    if (!selectedPatientId || !optionValue.trim()) return;
+    setSubmittingReply(true);
+    try {
+      const response = await fetch(`/api/patients/${selectedPatientId}/replies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reply_option: optionValue,
+          channel: activePatient?.preferred_channel || 'WhatsApp'
+        })
+      });
+      if (response.ok) {
+        setIncomingText('');
+        await loadPortalData(selectedPatientId);
+        if (onRefreshPatients) {
+          await onRefreshPatients();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to send response reply:", err);
+    } finally {
+      setSubmittingReply(false);
     }
   };
 
@@ -506,7 +543,7 @@ export default function PatientPortal({
   return (
     <div className="space-y-6">
       
-      {/* Patient Simulation Profile Selector Header */}
+      {/* Patient Active Terminal Selector Header */}
       <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-md border border-slate-800">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
@@ -516,13 +553,13 @@ export default function PatientPortal({
             </div>
             <h2 className="text-xl font-bold tracking-tight">Chronic Treatment Self-Service Portal</h2>
             <p className="text-xs text-slate-400 max-w-xl">
-              Simulate clinical wellness actions for active patients. Log daily progress, ask medical questions, book clinic consults, and give feedback.
+              Access active wellness actions for patient care. Log daily progress, submit physiological queries, request clinic consultations, and share treatment feedback.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
             <div className="text-xs text-right hidden sm:block">
-              <p className="text-slate-400 font-medium">Testing Simulator Actor:</p>
+              <p className="text-slate-400 font-medium">Active Logged-in Patient:</p>
               <p className="text-white font-bold">{activePatient?.full_name || 'No Patient Active'}</p>
             </div>
             
@@ -531,7 +568,7 @@ export default function PatientPortal({
               onChange={(e) => setSelectedPatientId(e.target.value)}
               className="bg-slate-850 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl outline-none border border-slate-700 cursor-pointer w-full sm:w-64 max-w-xs transition"
             >
-              <option value="" disabled>-- Select Sandbox Patient --</option>
+              <option value="" disabled>-- Select Active Patient Coordinates --</option>
               {patients
                 .filter(p => p.pharmacy_id === pharmacyId && p.status === 'Active')
                 .map(p => (
@@ -694,6 +731,188 @@ export default function PatientPortal({
                       <p className="text-[10px] text-slate-550 mt-3 font-semibold">
                         Cycle length: {med?.duration_days ?? 30} days
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 💬 TWO-WAY WHATSAPP / SMS OUTREACH SIMULATOR */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-3 mb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                        <Smartphone className="w-4 h-4 text-emerald-600" />
+                        Interactive Two-Way Outreach Simulator
+                      </h3>
+                      <p className="text-[10px] text-gray-400">Simulate incoming patient replied choices on WhatsApp &amp; SMS channels</p>
+                    </div>
+                    <span className="text-[9px] font-mono tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-200 uppercase px-2 py-0.5 rounded-full font-black">
+                      {activePatient.preferred_channel} Channel Active
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left: Interactive Phone Screen */}
+                    <div className="lg:col-span-7 bg-slate-950 rounded-3xl p-3 shadow-lg border-4 border-slate-800 max-w-md mx-auto w-full relative">
+                      {/* Top camera notch */}
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-20 h-4 bg-slate-800 rounded-full z-15"></div>
+                      
+                      {/* Inner screen container */}
+                      <div className="bg-slate-900 rounded-2xl overflow-hidden flex flex-col h-[380px] font-sans text-xs">
+                        {/* Header of Chat screen */}
+                        <div className="bg-slate-800 border-b border-slate-700/80 p-3 pt-5 flex items-center justify-between text-white">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-slate-600 flex items-center justify-center font-bold text-[10px] text-white tracking-tighter uppercase">
+                              {pharmacyName.split(' ')[0]}
+                            </div>
+                            <div>
+                              <p className="font-bold text-[11px] leading-tight">{pharmacyName}</p>
+                              <p className="text-[8px] text-emerald-450 font-mono flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                                Refill Outreach Bot Online
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[8px] opacity-60 font-mono">Simulated chat</span>
+                        </div>
+
+                        {/* Scrollable messages zone */}
+                        <div className="flex-1 p-3 overflow-y-auto space-y-3 flex flex-col bg-[#0b141a]">
+                          {/* System automated outbound alert */}
+                          <div className="self-start max-w-[85%] bg-slate-800 text-white rounded-2xl rounded-tl-sm p-2.5 shadow-sm space-y-1">
+                            <p className="text-[10px] leading-relaxed text-gray-200">
+                              Halo <strong>{activePatient.full_name}</strong>, kano kajjukizo mu mukwano okuva mu {pharmacyName}. Your medication for <strong>{med?.medication_name || "Metformin"}</strong> is due for a refill on <strong>{med?.next_refill_date ? med.next_refill_date.split('T')[0] : "Next cycle"}</strong>.
+                            </p>
+                            <div className="border-t border-white/10 pt-1 mt-1 text-[9px] text-amber-300 font-medium space-y-0.5">
+                              <p>Please reply with the digit code below:</p>
+                              <p><strong>1</strong> = Already picked up / Refilled meds.</p>
+                              <p><strong>2</strong> = Postpone and remind me tomorrow.</p>
+                              <p><strong>3</strong> = I need clinical assistance.</p>
+                              <p><strong>4</strong> = Call me back.</p>
+                            </div>
+                            <span className="text-[8px] opacity-40 text-right block font-mono">System Dispatched</span>
+                          </div>
+
+                          {/* Historical reply bubble lists */}
+                          {repliesList.length === 0 ? (
+                            <p className="text-center text-slate-500 text-[9px] py-4 italic">No replies recorded yet. Click options below to simulate an incoming answer!</p>
+                          ) : (
+                            repliesList.map((rep: any) => (
+                              <div 
+                                key={rep.reply_id} 
+                                className={`self-end max-w-[80%] rounded-2xl rounded-tr-sm p-2.5 shadow-sm ${
+                                  rep.option_selected === 1 
+                                    ? 'bg-emerald-600 text-white' 
+                                    : rep.option_selected === 2 
+                                    ? 'bg-yellow-600 text-slate-900 font-bold' 
+                                    : 'bg-indigo-650 text-white'
+                                }`}
+                              >
+                                <p className="text-[10px] leading-normal">{rep.reply_text}</p>
+                                <span className="text-[8px] opacity-60 text-right block font-mono mt-1">
+                                  {rep.channel} • {new Date(rep.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Interactive Footer Text bar */}
+                        <div className="p-2 bg-slate-800 border-t border-slate-700 flex items-center gap-1.5 shrink-0">
+                          <input
+                            type="text"
+                            placeholder="Type raw response option or message..."
+                            value={incomingText}
+                            onChange={(e) => setIncomingText(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSendReply(incomingText)}
+                            className="flex-1 bg-slate-900 border border-slate-700/60 rounded-xl px-2.5 py-1.5 text-[10px] text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
+                          <button
+                            type="button"
+                            disabled={submittingReply || !incomingText.trim()}
+                            onClick={() => handleSendReply(incomingText)}
+                            className="w-7 h-7 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 flex items-center justify-center text-white shrink-0 cursor-pointer"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Quick Command Simulator Dashboard */}
+                    <div className="lg:col-span-5 flex flex-col justify-between space-y-4 font-sans text-xs">
+                      <div className="bg-slate-50 border rounded-2xl p-4 space-y-3">
+                        <h4 className="font-extrabold text-slate-800 uppercase tracking-wider text-[10px] text-slate-500 flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          Instant Option Triggers
+                        </h4>
+                        <p className="text-slate-550 leading-relaxed text-[11px]">
+                          Click a predetermined response button below to simulate receiving that exact option back from the patient's device instantly.
+                        </p>
+
+                        <div className="space-y-2 pt-1.5">
+                          <button
+                            type="button"
+                            disabled={submittingReply}
+                            onClick={() => handleSendReply("1")}
+                            className="w-full flex items-center justify-between bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 p-2.5 rounded-xl transition text-left cursor-pointer group"
+                          >
+                            <div>
+                              <p className="font-bold text-slate-900 group-hover:text-emerald-700">Refill Meds (Choice 1)</p>
+                              <p className="text-[10px] text-slate-400">"I have already refilled my medication"</p>
+                            </div>
+                            <span className="text-[9px] bg-slate-100 group-hover:bg-emerald-100 text-gray-600 group-hover:text-emerald-700 rounded px-1.5 py-0.5 font-bold font-mono">1</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={submittingReply}
+                            onClick={() => handleSendReply("2")}
+                            className="w-full flex items-center justify-between bg-white hover:bg-yellow-50 border border-gray-200 hover:border-yellow-300 p-2.5 rounded-xl transition text-left cursor-pointer group"
+                          >
+                            <div>
+                              <p className="font-bold text-slate-900 group-hover:text-yellow-700">Remind Tomorrow (Choice 2)</p>
+                              <p className="text-[10px] text-slate-400">"Remind me tomorrow"</p>
+                            </div>
+                            <span className="text-[9px] bg-slate-100 group-hover:bg-yellow-100 text-gray-600 group-hover:text-yellow-700 rounded px-1.5 py-0.5 font-bold font-mono">2</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={submittingReply}
+                            onClick={() => handleSendReply("3")}
+                            className="w-full flex items-center justify-between bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 p-2.5 rounded-xl transition text-left cursor-pointer group"
+                          >
+                            <div>
+                              <p className="font-bold text-slate-900 group-hover:text-indigo-700">Needs Assistance (Choice 3)</p>
+                              <p className="text-[10px] text-slate-400">"I need assistance"</p>
+                            </div>
+                            <span className="text-[9px] bg-slate-100 group-hover:bg-indigo-100 text-gray-600 group-hover:text-indigo-700 rounded px-1.5 py-0.5 font-bold font-mono">3</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={submittingReply}
+                            onClick={() => handleSendReply("4")}
+                            className="w-full flex items-center justify-between bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 p-2.5 rounded-xl transition text-left cursor-pointer group"
+                          >
+                            <div>
+                              <p className="font-bold text-slate-900 group-hover:text-indigo-700">Callback Requested (Choice 4)</p>
+                              <p className="text-[10px] text-slate-400">"Call me"</p>
+                            </div>
+                            <span className="text-[9px] bg-slate-100 group-hover:bg-indigo-100 text-gray-600 group-hover:text-indigo-700 rounded px-1.5 py-0.5 font-bold font-mono">4</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-emerald-950 text-emerald-200 rounded-2xl p-4 border border-emerald-900 text-[11px] leading-relaxed relative overflow-hidden">
+                        <div className="absolute right-0 bottom-0 opacity-10 blur-xs">
+                          <Smartphone className="w-24 h-24 stroke-[4px]" />
+                        </div>
+                        <h5 className="font-extrabold text-white mb-1 uppercase tracking-wider text-[9px]">SaaS Telemetry Rules</h5>
+                        <p>
+                          Our two-way core logic updates patient parameters in real-time. If choices 3 or 4 are activated, notification warnings are immediately pushed onto the Clinician Overview. If 1 is accepted, the medication cycle resets instantly.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

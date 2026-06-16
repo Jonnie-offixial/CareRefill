@@ -1,0 +1,18 @@
+{
+  "name": "CareRefill Adherence CRM",
+  "short_name": "CareRefill",
+  "description": "Uganda's Premier Patient Adherence Refill Coordination Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#84CC16",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/src/assets/images/carerefill_logo_1781292601886.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

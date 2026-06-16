@@ -1,15 +1,29 @@
 import React, { useState, useEffect } from 'react';
+// @ts-ignore
+import logoUrl from './assets/images/carerefill_logo_1781646744724.jpg';
 import { Pharmacy, Patient, Medication, ReminderLog, SystemStats } from './types';
+
+// Standalone newly created modular files
+import CareRefillDashboard from './components/CareRefillDashboard';
+import AdherenceAnalytics from './components/AdherenceAnalytics';
+import WhatsAppRepliesConsole from './components/WhatsAppRepliesConsole';
+import VitalsProgressTracker from './components/VitalsProgressTracker';
+import CaregiversAlertDesk from './components/CaregiversAlertDesk';
+import LoyaltyRewardsLeaderboard from './components/LoyaltyRewardsLeaderboard';
+import AiPersonalizedMessages from './components/AiPersonalizedMessages';
+
+// Restored pre-existing components
 import PatientRegistry from './components/PatientRegistry';
 import SchedulerSim from './components/SchedulerSim';
 import MessageTemplatesEditor from './components/MessageTemplatesEditor';
-import MetricCards from './components/MetricCards';
-import IntegrationsHub from './components/IntegrationsHub';
-import PatientPortal from './components/PatientPortal';
 import ClinicConsultDesk from './components/ClinicConsultDesk';
 import AdminPanel from './components/AdminPanel';
 import RoleActorLogin from './components/RoleActorLogin';
 import SettingsPanel from './components/SettingsPanel';
+import IntegrationsHub from './components/IntegrationsHub';
+import MvpRoadmap from './components/MvpRoadmap';
+import LaunchPage from './components/LaunchPage';
+
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Building2, 
@@ -26,84 +40,150 @@ import {
   Sliders,
   MessageSquare,
   HelpCircle,
-  Plus
+  Plus,
+  Sun,
+  Moon,
+  TrendingUp,
+  Activity,
+  Heart,
+  Award,
+  Bell,
+  Calendar,
+  Stethoscope,
+  ChevronRight,
+  LogOut,
+  Menu,
+  X,
+  MapPin,
+  Flame,
+  Search,
+  Wifi
 } from 'lucide-react';
 
 export default function App() {
-  // Tenant states
+  // Theme support
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('carerefill_dark_mode') === 'true';
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  const toggleTheme = () => {
+    const updated = !darkMode;
+    setDarkMode(updated);
+    localStorage.setItem('carerefill_dark_mode', String(updated));
+  };
+
+  // Tenant/Pharmacy structures
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState<string>('pharm-001');
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
 
-  // Global Session State
-  const [currentUser, setCurrentUser] = useState<any>(() => {
-    const saved = localStorage.getItem('supabase_user_session');
-    if (saved) return JSON.parse(saved);
-    return null; // Start on multi-actor login for an interactive demo evaluation
-  });
+  // Global logging session
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Routing paths for /admin support
+  // Routing paths for /admin panel
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
 
-  useEffect(() => {
-    const handleUrlChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    window.addEventListener('popstate', handleUrlChange);
-    
-    const originalPushState = window.history.pushState;
-    window.history.pushState = function(...args) {
-      originalPushState.apply(this, args);
-      handleUrlChange();
-    };
-    
-    return () => {
-      window.removeEventListener('popstate', handleUrlChange);
-      window.history.pushState = originalPushState;
-    };
-  }, []);
+  // Navigation tab selections matching the sidebar categories
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
 
-  const navigateTo = (path: string) => {
-    window.history.pushState(null, '', path);
-    setCurrentPath(path);
-  };
+  // Mobile sidebar menu sliding overlay drawer state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Core Entity States
-  const [patients, setPatients] = useState<(Patient & { medication: Medication | null })[]>([]);
-  const [reminders, setReminders] = useState<(ReminderLog & { patient_name: string; phone_number: string; condition: string; medication_name: string })[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'patients' | 'scheduler' | 'templates' | 'integrations' | 'patient-portal' | 'clinic-desk' | 'admin' | 'facility-info' | 'settings'>('dashboard');
-
-  // Dynamic Tab Router based on Logged Actor Role and current URL pathname
-  useEffect(() => {
-    if (!currentUser) return;
-    if (window.location.pathname === '/admin' && currentUser.role === 'Admin') {
-      setActiveTab('admin');
-    } else if (currentUser.role === 'Patient') {
-      setActiveTab('patient-portal');
-    } else {
-      setActiveTab('dashboard');
-    }
-  }, [currentUser, currentPath]);
-
-  // Simulation Clock state
+  // Simulation parameters reference Clock
   const [simulationDate, setSimulationDate] = useState<string>('2026-06-12');
 
-  // Page States
+  // Core entities
+  const [patients, setPatients] = useState<(Patient & { medication: Medication | null })[]>([]);
+  const [reminders, setReminders] = useState<(ReminderLog & { patient_name: string; phone_number: string; condition: string; medication_name: string })[]>([]);
+  
+  // Page load status flags
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<SystemStats>({ totalPatients: 0, dueThisWeek: 0, overdue: 0, sentToday: 0 });
-  const [resettingDb, setResettingDb] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState(false);
+
+  // Sync / Online and Launch states
+  const [showLaunchPage, setShowLaunchPage] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      showToast("Connection Restored", "Real-time sync has been re-established.", "success");
+      if (selectedPharmacyId) {
+        fetchTenantData(selectedPharmacyId);
+      }
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast("Offline Mode Active", "Working on cached clinical logs.", "info");
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [selectedPharmacyId]);
+
+  // Custom toast lists
+  interface ToastMessage {
+    id: string;
+    message: string;
+    description?: string;
+    type: 'success' | 'error' | 'info';
+  }
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const showToast = (message: string, description?: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, message, description, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
+  };
 
   // 1. Initial Load of Pharmacies list
   useEffect(() => {
     const fetchPharmacies = async () => {
+      const isActuallyOnline = navigator.onLine;
+      setIsOnline(isActuallyOnline);
+
+      if (!isActuallyOnline) {
+        const cachedPharms = localStorage.getItem('carerefill_cache_pharmacies');
+        if (cachedPharms) {
+          try {
+            const data = JSON.parse(cachedPharms);
+            setPharmacies(data);
+            if (data.length > 0) {
+              setSelectedPharmacyId(data[0].pharmacy_id);
+              setSelectedPharmacy(data[0]);
+            }
+          } catch (e) {
+            console.error("Failed to parse cached pharmacies", e);
+          }
+        } else {
+          setError("Offline and no local pharmacy list cached.");
+        }
+        return;
+      }
+
       try {
         const response = await fetch('/api/pharmacies');
         if (response.ok) {
           const data = await response.json();
           setPharmacies(data);
-          // Set initial pharmacy
+          localStorage.setItem('carerefill_cache_pharmacies', JSON.stringify(data));
           if (data.length > 0) {
             setSelectedPharmacyId(data[0].pharmacy_id);
             setSelectedPharmacy(data[0]);
@@ -113,15 +193,60 @@ export default function App() {
         }
       } catch (err) {
         console.error(err);
-        setError("Unable to connect to full-stack backend. Please confirm the server configuration.");
+        const cachedPharms = localStorage.getItem('carerefill_cache_pharmacies');
+        if (cachedPharms) {
+          try {
+            const data = JSON.parse(cachedPharms);
+            setPharmacies(data);
+            if (data.length > 0) {
+              setSelectedPharmacyId(data[0].pharmacy_id);
+              setSelectedPharmacy(data[0]);
+            }
+          } catch (e) {
+            console.error(e);
+          }
+          setError(null);
+        } else {
+          setError("Unable to connect to full-stack backend.");
+        }
       }
     };
     fetchPharmacies();
   }, []);
 
-  // 2. Fetch Patients & Reminders whenever selected pharmacy or calendar simulation date changes
+  // 2. Fetch Patients & Reminders logs dynamically
   const fetchTenantData = async (pharmId: string) => {
     setLoading(true);
+    const isActuallyOnline = navigator.onLine;
+    setIsOnline(isActuallyOnline);
+
+    if (!isActuallyOnline) {
+      // Offline: immediately read from localStorage
+      const cachedPatientsStr = localStorage.getItem('carerefill_cache_patients_' + pharmId);
+      const cachedRemindersStr = localStorage.getItem('carerefill_cache_reminders_' + pharmId);
+      const cachedTime = localStorage.getItem('carerefill_cache_timestamp_' + pharmId);
+
+      if (cachedPatientsStr) {
+        try {
+          const parsed = JSON.parse(cachedPatientsStr);
+          setPatients(parsed);
+          setLastSyncedTime(cachedTime ? new Date(cachedTime).toLocaleTimeString() : 'Unknown');
+          showToast("Offline Cache Loaded", `Loaded ${parsed.length} patient coordinates locally from storage.`, "info");
+        } catch (e) {
+          console.error("Failed to parse patient cache", e);
+        }
+      }
+      if (cachedRemindersStr) {
+        try {
+          setReminders(JSON.parse(cachedRemindersStr));
+        } catch (e) {
+          console.error("Failed to parse reminders cache", e);
+        }
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       const pharm = pharmacies.find(p => p.pharmacy_id === pharmId) || null;
       setSelectedPharmacy(pharm);
@@ -132,23 +257,43 @@ export default function App() {
       if (patientRes.ok) {
         patientData = await patientRes.json();
         setPatients(patientData);
+        localStorage.setItem('carerefill_cache_patients_' + pharmId, JSON.stringify(patientData));
       }
 
-      // Fetch reminders
+      // Fetch reminders logs
       const reminderRes = await fetch(`/api/reminders?pharmacy_id=${pharmId}`);
       let reminderData: any[] = [];
       if (reminderRes.ok) {
         reminderData = await reminderRes.json();
         setReminders(reminderData);
+        localStorage.setItem('carerefill_cache_reminders_' + pharmId, JSON.stringify(reminderData));
       }
 
-      // Calculate localized real-time simulation statistics
-      calculateStats(patientData, reminderData, simulationDate);
-      
+      const syncTime = new Date().toISOString();
+      localStorage.setItem('carerefill_cache_timestamp_' + pharmId, syncTime);
+      setLastSyncedTime(new Date(syncTime).toLocaleTimeString());
       setError(null);
     } catch (err) {
       console.error(err);
-      setError("Failed to synchronize tenant lists.");
+      const cachedPatientsStr = localStorage.getItem('carerefill_cache_patients_' + pharmId);
+      const cachedRemindersStr = localStorage.getItem('carerefill_cache_reminders_' + pharmId);
+      const cachedTime = localStorage.getItem('carerefill_cache_timestamp_' + pharmId);
+
+      if (cachedPatientsStr) {
+        try {
+          setPatients(JSON.parse(cachedPatientsStr));
+          setLastSyncedTime(cachedTime ? new Date(cachedTime).toLocaleTimeString() : 'Unknown');
+          showToast("Sync Interrupted", "Showing your offline cached patient database.", "info");
+          setError(null);
+        } catch (e) {}
+      } else {
+        setError("Failed to synchronize database records and no offline cache found.");
+      }
+      if (cachedRemindersStr) {
+        try {
+          setReminders(JSON.parse(cachedRemindersStr));
+        } catch (e) {}
+      }
     } finally {
       setLoading(false);
     }
@@ -159,63 +304,6 @@ export default function App() {
       fetchTenantData(selectedPharmacyId);
     }
   }, [selectedPharmacyId, pharmacies]);
-
-  // Recalculate stats when simulation clock changes
-  useEffect(() => {
-    calculateStats(patients, reminders, simulationDate);
-  }, [simulationDate]);
-
-  const calculateStats = (
-    patientList: (Patient & { medication: Medication | null })[],
-    reminderList: any[],
-    referenceDateStr: string
-  ) => {
-    const refDate = new Date(referenceDateStr);
-    refDate.setHours(8, 0, 0, 0);
-
-    const oneWeekLater = new Date(refDate.getTime());
-    oneWeekLater.setDate(oneWeekLater.getDate() + 7);
-
-    let total = 0;
-    let dueCount = 0;
-    let overdueCount = 0;
-    let sentCount = 0;
-
-    patientList.forEach(p => {
-      total++;
-      if (p.status === 'Active' && p.medication) {
-        const nextDue = new Date(p.medication.next_refill_date);
-        nextDue.setHours(8, 0, 0, 0);
-
-        const diffTime = nextDue.getTime() - refDate.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-        // Due this week is within 0 to 7 days
-        if (diffDays >= 0 && diffDays <= 7) {
-          dueCount++;
-        }
-        // Overdue is past due date (diffDays < 0)
-        if (diffDays < 0) {
-          overdueCount++;
-        }
-      }
-    });
-
-    // Count reminders sent on the specific simulation date
-    const targetDateStr = referenceDateStr;
-    reminderList.forEach(r => {
-      if (r.status === 'Sent' && r.reminder_date.startsWith(targetDateStr)) {
-        sentCount++;
-      }
-    });
-
-    setStats({
-      totalPatients: total,
-      dueThisWeek: dueCount,
-      overdue: overdueCount,
-      sentToday: sentCount
-    });
-  };
 
   const handleAddPatient = async (patientPayload: any) => {
     const response = await fetch('/api/patients', {
@@ -228,6 +316,7 @@ export default function App() {
     });
 
     if (response.ok) {
+      showToast("Patient Registered", `${patientPayload.full_name} added to the Registry database.`, 'success');
       await fetchTenantData(selectedPharmacyId);
     } else {
       throw new Error("Unable to save patient record.");
@@ -235,6 +324,9 @@ export default function App() {
   };
 
   const handleMarkRefilled = async (medicationId: string, customDate?: string) => {
+    const matchedPatient = patients.find(p => p.medication?.medication_id === medicationId);
+    const patientName = matchedPatient ? matchedPatient.full_name : "Patient";
+
     const response = await fetch('/api/refills', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -246,8 +338,13 @@ export default function App() {
 
     if (response.ok) {
       await fetchTenantData(selectedPharmacyId);
+      showToast(
+        "Medication Refilled",
+        `Compliance loop logged for ${patientName}. Next refill schedules armed.`,
+        "success"
+      );
     } else {
-      alert("Failed to submit refill cycle update.");
+      showToast("Refill Update Failed", "Unable to log values.", "error");
     }
   };
 
@@ -260,520 +357,539 @@ export default function App() {
     });
 
     if (response.ok) {
+      showToast("Status Updated", `Patient flagged as ${newStatus}.`, "success");
       await fetchTenantData(selectedPharmacyId);
     }
   };
 
-  const handleTriggerScheduler = async (dateStr: string) => {
-    setSimulationDate(dateStr);
-    const response = await fetch('/api/trigger-scheduler', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pharmacy_id: selectedPharmacyId,
-        simulation_date: dateStr
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      // Re-fetch everything to sync states immediately
-      await fetchTenantData(selectedPharmacyId);
-      return data;
-    } else {
-      throw new Error("Scheduler script compilation error.");
-    }
-  };
-
-  const resetDatabasePrimacy = async () => {
-    setResettingDb(true);
-    setResetSuccess(false);
+  const handleTriggerScheduler = async () => {
     try {
-      const res = await fetch('/api/reset-db', { method: 'POST' });
-      if (res.ok) {
-        setResetSuccess(true);
-        // Reload pharmacies lists
-        const reloadRes = await fetch('/api/pharmacies');
-        if (reloadRes.ok) {
-          const data = await reloadRes.json();
-          setPharmacies(data);
-          if (data.length > 0) {
-            setSelectedPharmacyId(data[0].pharmacy_id);
-          }
-        }
-        setTimeout(() => setResetSuccess(false), 2500);
+      const response = await fetch('/api/trigger-scheduler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pharmacy_id: selectedPharmacyId,
+          reference_date: simulationDate
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        showToast(
+          "Scheduler Completed",
+          `Automated cron completed: dispatched ${result.reminders_sent} notifications (WA: ${result.channels_summary.WhatsApp}, SMS: ${result.channels_summary.SMS}).`,
+          "success"
+        );
+        await fetchTenantData(selectedPharmacyId);
+      } else {
+        showToast("Error", "Scheduler execution failed.", "error");
       }
     } catch (err) {
-      console.error(err);
-    } finally {
-      setResettingDb(false);
+      showToast("Error", "Unable to trigger scheduler core services.", "error");
     }
   };
 
-  // Theme styling helpers
-  const getThemeBgClass = () => {
-    if (!selectedPharmacy) return 'bg-teal-600';
-    switch (selectedPharmacy.color_theme) {
-      case 'emerald': return 'bg-emerald-600';
-      case 'indigo': return 'bg-indigo-600';
-      default: return 'bg-teal-600';
-    }
+  const handleSignOut = () => {
+    localStorage.removeItem('supabase_user_session');
+    setCurrentUser(null);
+    showToast("Logged Out Successfully", "You have signed out of your workspace.", "info");
   };
 
-  const getThemeTextClass = () => {
-    if (!selectedPharmacy) return 'text-teal-600';
-    switch (selectedPharmacy.color_theme) {
-      case 'emerald': return 'text-emerald-600';
-      case 'indigo': return 'text-indigo-600';
-      default: return 'text-teal-600';
-    }
-  };
+  // Verify roles access levels
+  const isAdminUser = currentUser?.role === 'Admin';
+  
+  // Render Launcher Gate First
+  if (showLaunchPage) {
+    return <LaunchPage onLaunchComplete={() => setShowLaunchPage(false)} />;
+  }
 
-  const getThemeBorderClass = () => {
-    if (!selectedPharmacy) return 'border-teal-500';
-    switch (selectedPharmacy.color_theme) {
-      case 'emerald': return 'border-emerald-500';
-      case 'indigo': return 'border-indigo-500';
-      default: return 'border-teal-500';
-    }
-  };
-
-  const getThemeGradient = () => {
-    if (!selectedPharmacy) return 'from-teal-600 via-teal-700 to-emerald-800';
-    switch (selectedPharmacy.color_theme) {
-      case 'emerald': return 'from-emerald-600 via-teal-600 to-emerald-800';
-      case 'indigo': return 'from-indigo-600 via-blue-700 to-sky-900';
-      default: return 'from-teal-600 via-teal-700 to-emerald-800';
-    }
-  };
-
-  const isCurrentlyAdminPath = currentPath === '/admin';
-  const showLogin = !currentUser || (isCurrentlyAdminPath && currentUser.role !== 'Admin');
-
-  if (showLogin) {
+  if (!currentUser) {
     return (
       <RoleActorLogin 
-        onLoginSuccess={(u) => {
-          setCurrentUser(u);
-          if (u.role === 'Admin') {
-            navigateTo('/admin');
-          } else {
-            navigateTo('/');
-          }
-        }} 
         pharmacies={pharmacies} 
-        initialActor={isCurrentlyAdminPath ? 'admin' : 'facility'} 
+        onLoginSuccess={(user) => {
+          localStorage.setItem('supabase_user_session', JSON.stringify(user));
+          setCurrentUser(user);
+          showToast("Workspace Logged In", `Logged in securely as ${user.email}.`, "success");
+        }} 
       />
     );
   }
 
-  const isPatientUser = currentUser?.role === 'Patient';
-  const isFacilityUser = currentUser?.role === 'Pharmacist' || currentUser?.role === 'Staff' || currentUser?.role === 'Health Facility';
-  const isAdminUser = currentUser?.role === 'Admin';
+  // Sidebar dynamic navigation configuration groups
+  const sidebarNavGroups = [
+    {
+      group_title: 'Overview',
+      links: [
+        { id: 'dashboard', label: 'Dashboard', icon: Clock },
+        { id: 'analytics', label: 'Analytics', icon: TrendingUp }
+      ]
+    },
+    {
+      group_title: 'Patients',
+      links: [
+        { id: 'patients', label: 'Patients', icon: Users },
+        { id: 'progress', label: 'Progress Check-In', icon: Activity },
+        { id: 'caregivers', label: 'Caregivers alerts', icon: Heart },
+        { id: 'loyalty', label: 'Loyalty Rewards', icon: Award }
+      ]
+    },
+    {
+      group_title: 'Communication',
+      links: [
+        { id: 'reminders', label: 'Reminders Queue', icon: Bell },
+        { id: 'conversations', label: 'WhatsApp Replies', icon: MessageSquare },
+        { id: 'ai-messages', label: 'AI Messages Draft', icon: Sparkles },
+        { id: 'templates', label: 'Templates customization', icon: Sliders }
+      ]
+    },
+    {
+      group_title: 'Clinical Workspace',
+      links: [
+        { id: 'clinic-desk-appointments', label: 'Appointments Book', icon: Calendar },
+        { id: 'mvp-roadmap', label: 'MVP+ Roadmap 🚀', icon: Sparkles },
+        { id: 'facility-info', label: 'Branch Doctors', icon: Building2 }
+      ]
+    },
+    {
+      group_title: 'SaaS Platform',
+      links: [
+        { id: 'integrations', label: 'Integrations Link', icon: Database },
+        { id: 'settings', label: 'Settings Panel', icon: Settings }
+      ]
+    }
+  ];
+
+  const handleSidebarClick = (tabId: string) => {
+    setActiveTab(tabId);
+    setMobileMenuOpen(false);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col justify-between">
+    <div className={`min-h-screen flex flex-col md:flex-row bg-[#FAFAFA] dark:bg-white text-gray-900 font-sans`}>
       
-      {/* Header Panel with Gradient & Multi-Tenant Switcher */}
-      <div className={`bg-gradient-to-r ${getThemeGradient()} text-white pt-4 pb-14 shadow-md px-4 sm:px-6 md:px-8 shrink-0`}>
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Mobile Header Bar */}
+      <header className="md:hidden bg-white text-slate-800 px-4 py-3 flex items-center justify-between border-b border-lime-150 z-50 shadow-sm shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg overflow-hidden bg-[#84CC16] flex items-center justify-center">
+            <span className="text-white font-extrabold text-sm select-none">CR</span>
+          </div>
+          <span className="font-sans font-black tracking-tight text-slate-800 text-sm">CareRefill</span>
+        </div>
+        <button 
+          onClick={() => setMobileMenuOpen(prev => !prev)}
+          className="p-1.5 rounded-lg text-[#84CC16] hover:bg-lime-50 transition-colors focus:outline-none"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </header>
+
+      {/* Left Sidebar Menu Drawer (Visible on md+ or conditional drawer on mobile) */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-64 bg-white text-slate-800 flex flex-col justify-between transform transition-transform duration-300 ease-in-out shrink-0
+        md:relative md:translate-x-0 border-r border-lime-150
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        
+        {/* Sidebar Nav Items Pane */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
           
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-              <Building2 className="w-6 h-6 text-emerald-100" />
+          {/* Logo Brand coordinates */}
+          <div className="p-4 flex items-center gap-2.5 border-b border-lime-150 bg-lime-50/20">
+            <div className="w-8 h-8 rounded-xl bg-[#84CC16] flex items-center justify-center shadow-xs shrink-0 select-none overflow-hidden">
+              <span className="text-white font-black text-sm">CR</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Pharmacy Refill Reminder Bot</h1>
-              <p className="text-xs text-emerald-100/80 font-sans flex items-center gap-1">
-                <span>🇺🇬 East Africa Patient Adherence SaaS MVP</span>
-                <span>•</span>
-                <span>Active Workspace SIM</span>
-              </p>
+              <h1 className="font-sans font-black tracking-tight text-slate-900 text-sm">CareRefill</h1>
+              <span className="text-[10px] text-[#71B20A] uppercase font-bold tracking-wider block">Workspace Desk</span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            {/* Tenant Switcher Portal */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-2 flex items-center gap-2 text-slate-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-100 px-2 pl-3 select-none">Active Tenant:</span>
-              <select
-                value={selectedPharmacyId}
-                onChange={(e) => setSelectedPharmacyId(e.target.value)}
-                className="bg-slate-900/40 text-white font-medium text-xs rounded-xl py-1.5 px-3 border border-white/10 focus:outline-none focus:ring-1 focus:ring-teal-300"
-              >
-                {pharmacies.map((pharm) => (
-                  <option key={pharm.pharmacy_id} value={pharm.pharmacy_id} className="bg-slate-800 text-white">
-                    🏢 {pharm.pharmacy_name}
-                  </option>
-                ))}
-              </select>
+          {/* Active Tenant branch selector dropdown */}
+          <div className="px-4 py-3 border-b border-lime-150 bg-lime-50/10">
+            <label className="text-[9px] text-[#71B20A] font-bold uppercase tracking-widest block mb-1">Active Office Center Log</label>
+            <select
+              value={selectedPharmacyId}
+              onChange={(e) => setSelectedPharmacyId(e.target.value)}
+              className="w-full bg-white text-slate-800 text-xs p-2 rounded-xl focus:outline-none border border-lime-200 font-medium cursor-pointer shadow-3xs"
+            >
+              {pharmacies.map((p) => (
+                <option key={p.pharmacy_id} value={p.pharmacy_id} className="text-gray-900 bg-white">
+                  {p.pharmacy_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dynamic Map groupings links */}
+          <nav className="p-3 space-y-5">
+            {sidebarNavGroups.map((group) => {
+              // Hide integrations & admin links from normal nursing staff optionally as configured
+              if (group.group_title === 'SaaS Platform' && !isAdminUser && activeTab !== 'settings') return null;
+
+              return (
+                <div key={group.group_title} className="space-y-1">
+                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-[#71B20A] tracking-widest block opacity-92">
+                    {group.group_title}
+                  </span>
+                  <div className="space-y-0.5">
+                    {group.links.map((link) => {
+                      const isActive = activeTab === link.id || 
+                        (link.id === 'clinic-desk-appointments' && activeTab === 'clinic-desk-appointments') ||
+                        (link.id === 'clinic-desk-consults' && activeTab === 'clinic-desk-consults');
+                      
+                      return (
+                        <button
+                          key={link.id}
+                          onClick={() => handleSidebarClick(link.id)}
+                          className={`
+                            w-full text-left py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer
+                            ${isActive 
+                              ? 'bg-[#84CC16] text-white font-bold shadow-md shadow-lime-300/40 scale-[0.98]' 
+                              : 'text-slate-700 hover:bg-lime-50/40 hover:text-[#71B20A]'
+                            }
+                          `}
+                        >
+                          <link.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#71B20A]'}`} />
+                          <span>{link.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Special System admin link only for admin session roles */}
+            {isAdminUser && (
+              <div className="space-y-1 pt-1">
+                <span className="text-[9px] pl-3.5 uppercase font-extrabold text-[#71B20A] tracking-widest block opacity-92">Super-Admin</span>
+                <button
+                  onClick={() => handleSidebarClick('admin')}
+                  className={`
+                    w-full text-left py-2 px-3.5 rounded-xl text-xs font-black flex items-center gap-2.5 transition-all cursor-pointer
+                    ${activeTab === 'admin' 
+                      ? 'bg-amber-400 text-slate-900 font-extrabold shadow-sm' 
+                      : 'text-slate-700 hover:bg-lime-50/40 hover:text-[#71B20A]'
+                    }
+                  `}
+                >
+                  <Shield className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>Admin Panel 🔑</span>
+                </button>
+              </div>
+            )}
+          </nav>
+
+        </div>
+
+        {/* Sidebar Footer session badge */}
+        <div className="p-4 border-t border-lime-150 bg-lime-50/20 space-y-3 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#84CC16] text-white flex items-center justify-center font-black text-xs shrink-0 select-none shadow-xs">
+              {(currentUser.email || 'VI').slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 truncate">{currentUser.email || 'Vianne Jonny'}</p>
+              <p className="text-[9px] text-[#71B20A] tracking-wide font-mono uppercase truncate">{currentUser.role || 'Program staff'}</p>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleSignOut}
+            className="w-full bg-white hover:bg-rose-550 hover:text-white hover:border-rose-400 text-[10px] tracking-widest font-black uppercase text-slate-700 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[#84CC16]/30 shadow-3xs"
+          >
+            <LogOut className="w-3 h-3 text-rose-500" />
+            <span>Sign Out Session</span>
+          </button>
+        </div>
+
+      </aside>
+
+      {/* Main Right Area Viewport scroll-pane */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA] dark:bg-slate-950 overflow-hidden">
+        
+        {/* Top bar control coordinates header */}
+        <header className="bg-white dark:bg-slate-900 border-b border-gray-150/80 dark:border-slate-800 shrink-0 select-none pb-4 pt-4 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-3xs z-30">
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>
+                {activeTab === 'dashboard' ? 'Overview' : 
+                 activeTab === 'analytics' ? 'Analytics Segment' : 
+                 activeTab === 'patients' ? 'Patient Registry' : 
+                 activeTab === 'progress' ? 'Vitals log check-in' : 
+                 activeTab === 'caregivers' ? 'Auxiliary caregivers desk' : 
+                 activeTab === 'loyalty' ? 'Gamification rewards scoreboard' : 
+                 activeTab === 'reminders' ? 'Simulated SMS Reminders Queue' : 
+                 activeTab === 'conversations' ? 'Two-way WhatsApp Communication console' : 
+                 activeTab === 'ai-messages' ? 'AI messages' : 
+                 activeTab === 'templates' ? 'Message templates' : 
+                 activeTab === 'clinic-desk-appointments' ? 'Clinic Scheduled appointments' : 
+                 activeTab === 'clinic-desk-consults' ? 'Clinic Q&A desk' : 
+                 activeTab === 'facility-info' ? 'Doctors & specialists directories' : 
+                 activeTab === 'settings' ? 'Branding settings' : 
+                 'Control Desk Console'}
+              </span>
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Refill coordination program portal under branch log: <span className="font-extrabold text-teal-600">{selectedPharmacy?.pharmacy_name || 'Kampala Road'}</span>
+            </p>
+          </div>
+
+          {/* Reference Clock adjustment layout widget */}
+          <div className="flex items-center gap-3">
+            
+            <div className="bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/60 p-2 rounded-2xl flex items-center gap-2.5 shadow-2xs">
+              <CalendarDays className="w-4 h-4 text-brand-green" />
+              <div className="text-left">
+                <span className="text-[8px] text-gray-400 block font-bold leading-none uppercase">Simulation Reference Clock</span>
+                <input 
+                  type="date" 
+                  value={simulationDate}
+                  onChange={(e) => setSimulationDate(e.target.value)}
+                  className="bg-transparent border-none text-[11px] font-black tracking-wider text-brand-green font-mono focus:outline-none focus:ring-0 p-0 m-0"
+                />
+              </div>
             </div>
 
-            {/* Session Profile Badge & Logout with Settings option */}
-            <div className="bg-slate-950/30 border border-white/10 rounded-2xl p-1.5 pl-3 flex items-center gap-3 shrink-0">
-              <div className="text-left font-sans text-xs flex items-center gap-2">
-                <div>
-                  <p className="font-extrabold text-white leading-tight">{currentUser?.name}</p>
-                  <p className="text-[10px] text-teal-200 font-mono leading-none mt-0.5">{currentUser?.role}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('settings')}
-                  title="Configure System Customization Preferences"
-                  className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                </button>
+            {/* Connection Status Indicator */}
+            <div className={`p-2 rounded-2xl flex items-center gap-2.5 border text-[11px] shadow-2xs ${
+              isOnline 
+                ? 'bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-150 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-300' 
+                : 'bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300'
+            }`}>
+              <div className="relative flex items-center justify-center">
+                <span className={`block h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping top-0 left-0 ${isOnline ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-[8px] text-gray-400 font-bold uppercase leading-none">Sync Engine</span>
+                <span className="font-extrabold tracking-wide leading-tight text-[10px]">
+                  {isOnline ? 'ONLINE' : 'OFFLINE MODE (Cached)'}
+                </span>
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem('supabase_user_session');
-                  setCurrentUser(null);
-                  navigateTo('/');
+                  if (isOnline) {
+                    fetchTenantData(selectedPharmacyId);
+                    showToast("Synchronized", "Clinical database synchronized and cached locally.", "success");
+                  } else {
+                    showToast("Offline Mode Active", "Cannot reconcile remote backend while offline. Showing local cache.", "info");
+                  }
                 }}
-                className="bg-white/10 hover:bg-white/20 transition-colors text-[10px] font-black uppercase tracking-wider text-white px-2.5 py-1.5 rounded-xl cursor-pointer"
+                className="ml-1 bg-white hover:bg-slate-100 dark:bg-white/10 dark:hover:bg-white/20 border border-slate-250 dark:border-slate-800 px-2 py-1 rounded-lg text-[9px] font-black text-slate-700 dark:text-slate-150 transition cursor-pointer flex items-center gap-1 shrink-0 shadow-3xs"
+                title="Synchronize clinical database cache manually"
               >
-                Sign Out
+                <RefreshCw className={`w-2.5 h-2.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Sync</span>
               </button>
             </div>
-          </div>
 
-        </div>
-      </div>
-
-      {/* Main Body Grid */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 -mt-8 flex-1 pb-16">
-        <div className="space-y-6">
-          
-          {/* Tenant Profile Banner Card */}
-          {selectedPharmacy && (
-            <motion.div 
-              key={selectedPharmacy.pharmacy_id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+            {/* Dark & Light switch button */}
+            <button
+              onClick={toggleTheme}
+              className="p-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 hover:text-slate-850 dark:text-slate-200 border border-gray-150 dark:border-slate-800 rounded-2xl cursor-pointer shadow-3xs"
             >
-              <div className="space-y-1">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${selectedPharmacy.color_theme === 'emerald' ? 'bg-emerald-50 text-emerald-700' : selectedPharmacy.color_theme === 'indigo' ? 'bg-indigo-50 text-indigo-700' : 'bg-teal-50 text-teal-700'}`}>
-                  {isPatientUser ? "Your Care Provider" : "Clinical Workspace Profile"}
-                </span>
-                <h2 className="text-lg font-bold text-gray-950">{selectedPharmacy.pharmacy_name}</h2>
-                <p className="text-xs text-gray-400 font-sans">{selectedPharmacy.address} • {selectedPharmacy.phone_number}</p>
+              {darkMode ? <Sun className="w-4 h-4 text-amber-500 shrink-0" /> : <Moon className="w-4 h-4 text-slate-700 shrink-0" />}
+            </button>
+
+          </div>
+        </header>
+
+        {/* Central screen workspace scroll area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+          
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <div className="h-96 flex flex-col items-center justify-center text-center p-8 space-y-4">
+                <RefreshCw className="w-8 h-8 text-brand-green animate-spin" />
+                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Querying workspace...</h4>
               </div>
-
-              {/* Navigation Options inside Tenant wrapper (filtered by actor role) */}
-              <div className="flex flex-wrap bg-gray-100 p-1 rounded-xl border border-gray-200/85 gap-1 items-center self-start md:self-auto shadow-2xs">
-                
-                {/* PATIENT ROLE TABS */}
-                {isPatientUser && (
-                  <>
-                    <button
-                      onClick={() => setActiveTab('patient-portal')}
-                      className={`px-4 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1 border ${
-                        activeTab === 'patient-portal' 
-                          ? 'bg-indigo-650 text-white shadow-3xs border-indigo-550 font-extrabold' 
-                          : 'text-indigo-600 hover:bg-indigo-50/50 bg-transparent border-transparent'
-                      }`}
-                    >
-                      My Treatment Portal
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('facility-info')}
-                      className={`px-4 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 ${activeTab === 'facility-info' ? 'bg-white text-gray-950 shadow-3xs font-black' : 'text-gray-500 hover:text-gray-850 bg-transparent'}`}
-                    >
-                      🏢 Facility Profile Coordinates
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('settings')}
-                      className={`px-4 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1 border border-transparent ${
-                        activeTab === 'settings' ? 'bg-slate-900 text-teal-300 font-black shadow-3xs' : 'text-gray-500 hover:text-gray-850 bg-transparent'
-                      }`}
-                    >
-                      <Settings className="w-3.5 h-3.5 shrink-0" />
-                      Settings
-                    </button>
-                  </>
-                )}
-
-                {/* CLINICAL HEALTH FACILITY TABS */}
-                {(isFacilityUser || isAdminUser) && (
-                  <>
-                    <button
-                      onClick={() => setActiveTab('dashboard')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 ${activeTab === 'dashboard' ? 'bg-white text-gray-950 shadow-3xs font-black' : 'text-gray-500 hover:text-gray-850 bg-transparent'}`}
-                    >
-                      Overview
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('patients')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 ${activeTab === 'patients' ? 'bg-white text-gray-950 shadow-3xs font-black' : 'text-gray-500 hover:text-gray-850 bg-transparent'}`}
-                    >
-                      Registry ({patients.length})
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('scheduler')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 ${activeTab === 'scheduler' ? 'bg-white text-gray-950 shadow-3xs font-black' : 'text-gray-500 hover:text-gray-850 bg-transparent'}`}
-                    >
-                      Cron Scheduler
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('templates')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 ${activeTab === 'templates' ? 'bg-white text-gray-950 shadow-3xs font-black' : 'text-gray-500 hover:text-gray-850 bg-transparent'}`}
-                    >
-                      Customizer
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('integrations')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 ${activeTab === 'integrations' ? 'bg-white text-gray-950 shadow-3xs font-black' : 'text-gray-500 hover:text-gray-850 bg-transparent'}`}
-                    >
-                      Integrations Hub
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('clinic-desk')}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1 border ${
-                        activeTab === 'clinic-desk' 
-                          ? 'bg-slate-900 text-teal-300 border-slate-950 font-extrabold' 
-                          : 'text-slate-700 hover:bg-slate-100 bg-transparent border-transparent'
-                      }`}
-                    >
-                      Care Consult Desk
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('settings')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1 border border-transparent ${
-                        activeTab === 'settings' ? 'bg-slate-900 text-teal-300 font-semibold shadow-3xs' : 'text-gray-500 hover:text-gray-850 bg-transparent'
-                      }`}
-                    >
-                      <Settings className="w-3.5 h-3.5 shrink-0" />
-                      Settings
-                    </button>
-                  </>
-                )}
-
-                {/* ADMIN TABS */}
-                {isAdminUser && (
-                  <>
-                    <div className="h-4 w-[1px] bg-gray-300 mx-1 hidden sm:block"></div>
-                    <button
-                      onClick={() => setActiveTab('admin')}
-                      className={`px-3 py-1.5 text-xs font-black rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1.5 border ${
-                        activeTab === 'admin' 
-                          ? 'bg-slate-950 text-emerald-400 border-slate-950 font-black shadow-3xs' 
-                          : 'text-rose-700 hover:bg-rose-50/50 bg-transparent border-transparent'
-                      }`}
-                    >
-                      <Shield className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                      Admin Panel 🔑
-                    </button>
-                  </>
-                )}
-
-              </div>
-            </motion.div>
-          )}
-
-          {/* Quick Loading or Error Overlays */}
-          {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl text-xs flex items-center gap-2 font-medium">
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
-              {error}
-            </div>
-          )}
-
-          {loading ? (
-            <div className="bg-white rounded-2xl py-20 text-center border border-gray-100 flex flex-col items-center justify-center gap-4">
-              <RefreshCw className="w-8 h-8 text-teal-600 animate-spin" />
-              <p className="text-xs text-gray-500 font-medium">Loading isolated tenant records...</p>
-            </div>
-          ) : (
-            <AnimatePresence mode="wait">
+            ) : (
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.15 }}
-                className="space-y-6"
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6 max-w-7xl mx-auto w-full"
               >
                 
-                {/* 1. Dashboard Block */}
+                {/* View 1: Main aggregate Dashboard dashboard */}
                 {activeTab === 'dashboard' && (
-                  <div className="space-y-6">
-                    {/* Synchronized calendar alert banner */}
-                    <div className="bg-blue-50 border border-blue-150/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-3xs">
-                      <div className="flex items-start sm:items-center gap-3">
-                        <div className="bg-blue-600 text-white rounded-xl p-2 flex items-center justify-center shrink-0">
-                          <Clock className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-blue-900 leading-tight">Simulation Time Calibration: {simulationDate}</p>
-                          <p className="text-[11px] text-blue-700 font-sans leading-normal mt-0.5">Toggle the simulation clock to test compliance alerts on different dates.</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 bg-white border border-blue-200 rounded-xl p-1 shadow-2xs self-start sm:self-auto shrink-0">
-                        <CalendarDays className="w-3.5 h-3.5 text-blue-400 ml-2" />
-                        <input
-                          type="date"
-                          value={simulationDate}
-                          onChange={(e) => setSimulationDate(e.target.value)}
-                          className="border-0 bg-transparent text-xs font-bold text-gray-800 font-mono focus:outline-none p-1.5 shrink-0"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Primary KPI Cards */}
-                    <MetricCards
-                      stats={stats}
-                      patients={patients}
-                      colorTheme={selectedPharmacy?.color_theme || 'teal'}
-                    />
-
-                    {/* Fast Track workflow info bento */}
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col md:flex-row gap-6 shadow-3xs justify-between">
-                      <div className="max-w-md">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-teal-600 bg-teal-50 px-2.5 py-1 border border-teal-100 rounded-sm">Quick Action Play</span>
-                        <h4 className="text-base font-bold text-gray-950 mt-2 mb-1">How to demonstrate the refill cycle:</h4>
-                        <ol className="text-xs text-gray-650 space-y-1.5 list-decimal list-inside leading-relaxed text-gray-600">
-                          <li>Click on the <strong className="text-gray-900 font-medium">Registry tab</strong> above.</li>
-                          <li>Locate <strong className="text-gray-950 font-medium">Sarah Namubiru</strong> (Hypertension) or <strong className="text-gray-950 font-medium">Moses Okello</strong> (Diabetes).</li>
-                          <li>Press the green <strong className="text-gray-950 font-bold">Refill button</strong> (adjusting dates back or forward).</li>
-                          <li>The system automatically updates the cycle, calculates the new refill date, and resets logs!</li>
-                          <li>Run the <strong className="text-gray-950 font-medium">Scheduler tab</strong> to audit instant delivery webhooks.</li>
-                        </ol>
-                      </div>
-
-                      <div className="bg-slate-50 border border-gray-200/60 rounded-xl p-4 flex flex-col justify-between md:max-w-xs shrink-0">
-                        <div className="flex items-center gap-1.5 font-bold uppercase tracking-widest text-[10px] text-slate-500 mb-1">
-                          <Database className="w-4 h-4 text-slate-400" /> Administrative Sandbox
-                        </div>
-                        <p className="text-[11px] text-gray-500 leading-normal mb-3">
-                          Need a clean slate? Press below to reset all workspaces back to pre-seeded Ugandan pharmacy records instantly.
-                        </p>
-                        <button
-                          onClick={resetDatabasePrimacy}
-                          disabled={resettingDb}
-                          className="bg-slate-200 hover:bg-slate-300 transition-colors text-slate-700 py-1.5 px-3 border border-slate-300 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1"
-                        >
-                          {resettingDb ? (
-                            <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Seeding...
-                            </>
-                          ) : resetSuccess ? (
-                            <>
-                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Succeeded!
-                            </>
-                          ) : (
-                            <>
-                              Re-seed Sandbox Defaults
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <CareRefillDashboard
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                    setActiveTab={setActiveTab}
+                  />
                 )}
 
-                {/* 2. Patient Directory block */}
+                {/* View 2: Analytics chart grids stats reports */}
+                {activeTab === 'analytics' && (
+                  <AdherenceAnalytics
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 3: Registry patient database collection */}
                 {activeTab === 'patients' && (
                   <PatientRegistry
                     patients={patients}
                     onAddPatient={handleAddPatient}
                     onMarkRefilled={handleMarkRefilled}
                     onToggleStatus={handleToggleStatus}
-                    colorTheme={selectedPharmacy?.color_theme || 'teal'}
+                    colorTheme="emerald"
                   />
                 )}
 
-                {/* 3. Cron automated scheduler tab block */}
-                {activeTab === 'scheduler' && (
+                {/* View 4: Clinical indicators logs & Vitals tracking */}
+                {activeTab === 'progress' && (
+                  <VitalsProgressTracker
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 5: Caregivers programs auxiliary SMS contacts */}
+                {activeTab === 'caregivers' && (
+                  <CaregiversAlertDesk
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 6: Loyalty boards points redemption vouchers */}
+                {activeTab === 'loyalty' && (
+                  <LoyaltyRewardsLeaderboard
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 7: Cron scheduler list alerts logs reminders stream */}
+                {activeTab === 'reminders' && (
                   <SchedulerSim
                     reminders={reminders}
                     onTriggerScheduler={handleTriggerScheduler}
-                    colorTheme={selectedPharmacy?.color_theme || 'teal'}
+                    colorTheme="emerald"
                   />
                 )}
 
-                {/* 4. Text customization block */}
+                {/* View 8: WhatsApp/SMS Replies two-way answers simulated client */}
+                {activeTab === 'conversations' && (
+                  <WhatsAppRepliesConsole
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 9: AI messages Gemini assistant care drafts reviews */}
+                {activeTab === 'ai-messages' && (
+                  <AiPersonalizedMessages
+                    patients={patients}
+                    pharmacyId={selectedPharmacyId}
+                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 10: Message templates editor customizations */}
                 {activeTab === 'templates' && (
                   <MessageTemplatesEditor
                     pharmacyId={selectedPharmacyId}
-                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : " Kampala Chemistry"}
-                    colorTheme={selectedPharmacy?.color_theme || 'teal'}
+                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : "Kampala Road Office"}
+                    colorTheme="emerald"
                   />
                 )}
 
-                {/* 5. Database & Delivery Integration Hub */}
-                {activeTab === 'integrations' && (
-                  <IntegrationsHub
-                    colorTheme={selectedPharmacy?.color_theme || 'teal'}
-                    currentUser={currentUser}
-                    onUserUpdate={setCurrentUser}
-                  />
-                )}
-
-                {/* 6. Patient self-service portal (Vitals logging, Appts slots picker, doctor-patient QAs) */}
-                {activeTab === 'patient-portal' && (
-                  <PatientPortal
+                {/* View 11: Appointments list and scheduler */}
+                {activeTab === 'clinic-desk-appointments' && (
+                  <ClinicConsultDesk
                     patients={patients}
                     pharmacyId={selectedPharmacyId}
-                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : "Kampala Community Pharmacy"}
-                    colorTheme={selectedPharmacy?.color_theme || 'teal'}
+                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : "Kampala Road Office"}
+                    colorTheme="emerald"
                     onRefreshPatients={() => fetchTenantData(selectedPharmacyId)}
+                    defaultSubTab="appointments"
                   />
                 )}
 
-                {/* Patient Health Facility Information Coordinates Tab */}
+                {/* View 12: MVP+ Roadmap high fidelity implementation */}
+                {activeTab === 'mvp-roadmap' && (
+                  <MvpRoadmap
+                    patients={patients.map(p => ({
+                      patient_id: p.patient_id,
+                      full_name: p.full_name,
+                      condition: p.chronic_condition || "Chronic protocol",
+                      preferred_channel: p.preferred_channel || "WhatsApp",
+                      recommendedAction: p.risk_level === 'High' ? 'Call patient' : p.risk_level === 'Medium' ? 'Extra reminder' : 'Standard loop',
+                      risk: (p.risk_level === 'High' || p.risk_level === 'Medium' || p.risk_level === 'Low') ? p.risk_level : 'Low'
+                    }))}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 13: Doctor branch specialists credentials templates */}
                 {activeTab === 'facility-info' && selectedPharmacy && (
-                  <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-6">
+                  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-150 dark:border-slate-800 p-8 shadow-sm space-y-6">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-teal-50 rounded-2xl text-teal-600">
-                        <Building2 className="w-6 h-6 text-teal-600" />
+                      <div className="p-3 bg-emerald-50 rounded-2xl text-brand-green">
+                        <Building2 className="w-6 h-6 text-brand-green" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">Health Facility Information</h3>
-                        <p className="text-xs text-gray-500 font-sans">Official workspace coordinates of {selectedPharmacy.pharmacy_name}</p>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Care Center Workspace coordinates</h3>
+                        <p className="text-xs text-gray-500">Official medical specialists registry for branch {selectedPharmacy.pharmacy_name}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-gray-100 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Contact Desk</span>
-                        <h4 className="text-sm font-bold text-gray-950 font-sans">SaaS Mobile Coordinates</h4>
+                      <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Contact channel</span>
+                        <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Clinic Gateway Mobile</h4>
                         <p className="text-xs text-teal-700 font-mono font-bold">{selectedPharmacy.phone_number}</p>
-                        <p className="text-[10px] text-gray-400">Available 24/7 for SMS adherence confirmations and emergency refills.</p>
                       </div>
 
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-gray-100 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Clinic Coordinates</span>
-                        <h4 className="text-sm font-bold text-gray-950 font-sans">Physical Address</h4>
-                        <p className="text-xs text-gray-700 font-sans font-medium">{selectedPharmacy.address}</p>
-                        <p className="text-[10px] text-gray-400">Main medical center location, Kampala, Uganda.</p>
+                      <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Location coordinates</span>
+                        <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Physical Address coordinates</h4>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">{selectedPharmacy.address}</p>
                       </div>
 
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-gray-100 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Treatment Programs</span>
-                        <h4 className="text-sm font-bold text-gray-950 font-sans">Adherence Support Centers</h4>
-                        <p className="text-xs text-slate-600 font-sans font-medium">Hypertension • Diabetes • HIV/ARV Therapy</p>
-                        <p className="text-[10px] text-gray-400">Personalized SMS triggers configured for maximum medicine compliance.</p>
+                      <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Monitored Treatment Groups</span>
+                        <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Chronic Adherent Protocols</h4>
+                        <p className="text-xs text-slate-600 dark:text-gray-400">Hypertension • Diabetes • Asthma • HIV/ARV</p>
                       </div>
                     </div>
 
-                    <div className="border-t border-gray-100 pt-6">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Clinical Care Team</h4>
+                    <div className="border-t border-gray-100 dark:border-slate-800 pt-6">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-450 mb-3">Facility Doctors & specialists</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center font-bold text-teal-700">SM</div>
+                        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/20 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <div className="w-10 h-10 rounded-full bg-lime-150 text-[#71B20A] flex items-center justify-center font-bold">SM</div>
                           <div>
-                            <p className="text-xs font-bold text-gray-900">Dr. Sarah Mukasa</p>
-                            <p className="text-[10px] text-gray-400">Chief Clinical Pharmacist</p>
+                            <p className="text-xs font-bold text-gray-900 dark:text-gray-150">Dr. Sarah Mukasa</p>
+                            <p className="text-[10px] text-gray-450">Chief Clinical Adherence Pharmacist</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">EO</div>
+                        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/20 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">EO</div>
                           <div>
-                            <p className="text-xs font-bold text-gray-900">Dr. Emmanuel Okot</p>
-                            <p className="text-[10px] text-gray-400">Lead Patient Relations Officer</p>
+                            <p className="text-xs font-bold text-gray-900 dark:text-gray-150">Dr. Emmanuel Okot</p>
+                            <p className="text-[10px] text-gray-450">Supervisor Relations Officer</p>
                           </div>
                         </div>
                       </div>
@@ -781,65 +897,88 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 9. Personalization Settings and System Configuration */}
+                {/* View 14: Settings and Workspace management */}
                 {activeTab === 'settings' && (
                   <SettingsPanel />
                 )}
 
-                {/* 7. Practice Specialist Clinic Consultation Desk (Auto AI Clinician advice drafter, confirmations, vitals trends dashboards) */}
-                {activeTab === 'clinic-desk' && (
-                  <ClinicConsultDesk
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : "Kampala Community Pharmacy"}
-                    colorTheme={selectedPharmacy?.color_theme || 'teal'}
-                    onRefreshPatients={() => fetchTenantData(selectedPharmacyId)}
-                  />
-                )}
-
-                {/* 8. Super-Admin control panel */}
-                {activeTab === 'admin' && (
+                {/* View 15: Admin Panel control multi-branch tenant database */}
+                {activeTab === 'admin' && isAdminUser && (
                   <AdminPanel
                     currentUser={currentUser}
                     onUserUpdate={setCurrentUser}
-                    onRefreshAllData={() => {
-                      fetch('/api/pharmacies')
-                        .then(res => res.ok ? res.json() : [])
-                        .then(data => {
-                          setPharmacies(data);
-                          if (data.length > 0) {
-                            const chosen = data.find((p: any) => p.pharmacy_id === selectedPharmacyId) || data[0];
-                            setSelectedPharmacyId(chosen.pharmacy_id);
-                            setSelectedPharmacy(chosen);
-                          }
-                        });
+                    onRefreshAllData={async () => {
+                      const res = await fetch('/api/pharmacies');
+                      if (res.ok) {
+                        setPharmacies(await res.json());
+                      }
                     }}
                   />
                 )}
 
+                {/* View 16: Database Hub */}
+                {activeTab === 'integrations' && isAdminUser && (
+                  <IntegrationsHub
+                    colorTheme="emerald"
+                    currentUser={currentUser}
+                    onUserUpdate={setCurrentUser}
+                  />
+                )}
+
               </motion.div>
-            </AnimatePresence>
-          )}
+            )}
+          </AnimatePresence>
 
-        </div>
-      </main>
+        </main>
 
-      {/* Styled Human Footer */}
-      <footer className="bg-white border-t border-gray-150 py-6 px-4 shrink-0 text-center select-none">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>© 2026 Pharmacy Refill Reminder Bot. All rights reserved.</p>
-          <div className="flex gap-4">
-            <span className="font-sans font-medium text-emerald-600 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              WhatsApp Business API Simulator Live
-            </span>
-            <span className="font-sans font-medium text-indigo-600 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
-              SMS Telecomm Webhook Logs Configured
-            </span>
+        {/* Global Footer coordinates */}
+        <footer className="bg-white dark:bg-slate-900 border-t border-gray-150 dark:border-slate-800 py-4 px-6 text-center shrink-0">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
+            <p className="font-medium">© 2026 CareRefill Compliance CRM. Uganda Center.</p>
+            <div className="flex gap-4">
+              <span className="text-emerald-500 font-bold flex items-center gap-1 font-sans">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                WhatsApp Business API Active
+              </span>
+              <span className="text-blue-500 font-bold flex items-center gap-1 font-sans">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                SMS Cellular Gateway Online
+              </span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+
+      </div>
+
+      {/* Dynamic notifications popup alerts stack container */}
+      <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 max-w-sm pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`pointer-events-auto p-4 rounded-2xl shadow-xl border flex items-start gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${
+              toast.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-950 dark:bg-emerald-950/90 dark:border-emerald-800 dark:text-emerald-100'
+                : toast.type === 'error'
+                ? 'bg-rose-50 border-rose-200 text-rose-950 dark:bg-rose-950/90 dark:border-rose-800 dark:text-rose-100'
+                : 'bg-slate-50 border-slate-200 text-slate-950 dark:bg-slate-905/90 dark:border-slate-850 dark:text-slate-100'
+            }`}
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            ) : toast.type === 'error' ? (
+              <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+            ) : (
+              <HelpCircle className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+            )}
+            <div className="space-y-1">
+              <h4 className="text-xs font-black uppercase tracking-wide leading-none">{toast.message}</h4>
+              {toast.description && (
+                <p className="text-[11px] font-medium leading-tight opacity-90">{toast.description}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
     </div>
   );

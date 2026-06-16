@@ -55,7 +55,10 @@ export default function AdminPanel({ currentUser, onUserUpdate, onRefreshAllData
     pharmacy_name: '',
     address: '',
     phone_number: '',
-    color_theme: 'teal'
+    color_theme: 'teal',
+    status: 'Active',
+    plan_tier: 'Standard',
+    message_limit: 1000
   });
   const [rxError, setRxError] = useState<string | null>(null);
   const [rxSuccess, setRxSuccess] = useState<string | null>(null);
@@ -113,7 +116,10 @@ export default function AdminPanel({ currentUser, onUserUpdate, onRefreshAllData
         pharmacy_name: rx.pharmacy_name,
         address: rx.address,
         phone_number: rx.phone_number,
-        color_theme: rx.color_theme
+        color_theme: rx.color_theme,
+        status: (rx as any).status || 'Active',
+        plan_tier: (rx as any).plan_tier || 'Standard',
+        message_limit: (rx as any).message_limit || 1000
       });
     } else {
       setEditingRx(null);
@@ -122,7 +128,10 @@ export default function AdminPanel({ currentUser, onUserUpdate, onRefreshAllData
         pharmacy_name: '',
         address: '',
         phone_number: '',
-        color_theme: 'teal'
+        color_theme: 'teal',
+        status: 'Active',
+        plan_tier: 'Standard',
+        message_limit: 1000
       });
     }
     setIsRxModalOpen(true);
@@ -610,6 +619,43 @@ export default function AdminPanel({ currentUser, onUserUpdate, onRefreshAllData
                   <option value="emerald">Surgical Emerald</option>
                   <option value="indigo">Clinical Indigo</option>
                 </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700 block uppercase tracking-wider text-[9px]">SaaS Tenant status</label>
+                <select
+                  value={rxForm.status}
+                  onChange={(e) => setRxForm({ ...rxForm, status: e.target.value })}
+                  className="w-full text-slate-900 border border-gray-250 p-2 text-xs rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                >
+                  <option value="Active">Active / On-Board</option>
+                  <option value="Suspended">Suspended / Decommissioned</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="font-bold text-gray-700 block uppercase tracking-wider text-[9px]">SaaS subscription Tier</label>
+                  <select
+                    value={rxForm.plan_tier}
+                    onChange={(e) => setRxForm({ ...rxForm, plan_tier: e.target.value })}
+                    className="w-full text-slate-900 border border-gray-250 p-2 text-xs rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                  >
+                    <option value="Standard">Standard ($19/mo)</option>
+                    <option value="Professional">Professional ($49/mo)</option>
+                    <option value="Enterprise">Enterprise ($149/mo)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-gray-700 block uppercase tracking-wider text-[9px]">Monthly Messages limit</label>
+                  <input
+                    type="number"
+                    value={rxForm.message_limit}
+                    onChange={(e) => setRxForm({ ...rxForm, message_limit: parseInt(e.target.value) || 1000 })}
+                    className="w-full text-slate-900 border border-gray-250 p-2 text-xs rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-2 pt-4 border-t">

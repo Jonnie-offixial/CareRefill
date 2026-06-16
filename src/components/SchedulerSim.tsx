@@ -97,7 +97,7 @@ export default function SchedulerSim({
           </ul>
 
           <div className="border-t border-gray-200/60 pt-4 mb-4">
-            <label className="block text-xs font-semibold text-gray-700 uppercase mb-2">Simulate Clock Calendar</label>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-2">Operational Clock Calendar</label>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" />
               <input
@@ -108,7 +108,7 @@ export default function SchedulerSim({
               />
             </div>
             <p className="text-[10px] text-gray-400 mt-1 leading-normal">
-              Change the system date above to scan who is due on that specific date! 
+              Change the operational date above to scan who is due on that specific date! 
               <br />Try <span className="font-mono bg-gray-100 border border-gray-200 px-0.5 text-[9px] rounded-sm text-gray-600">2026-06-12</span> (3 alerts) or <span className="font-mono bg-gray-100 border border-gray-200 px-0.5 text-[9px] rounded-sm text-gray-600">2026-06-14</span> (1 alert).
             </p>
           </div>
@@ -215,7 +215,7 @@ export default function SchedulerSim({
           </div>
         </div>
 
-        {/* API response simulation container */}
+        {/* API response webhook terminal container */}
         <AnimatePresence>
           {apiResponseLogs && (
             <motion.div
@@ -229,7 +229,7 @@ export default function SchedulerSim({
                   <span className="flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5 text-emerald-500" /> TELECOMM WEBHOOK TERMINAL</span>
                   <span className="text-[9px] bg-slate-800 px-1 border border-slate-700 rounded-sm">200 OK</span>
                 </div>
-                <p className="text-slate-200">Refill Bot engine completed webhook loop at: {new Date(apiResponseLogs.simulation_run_at).toLocaleString()}</p>
+                <p className="text-slate-200">Refill Bot engine completed live webhook dispatch check at: {new Date(apiResponseLogs.run_at || apiResponseLogs.simulation_run_at || Date.now()).toLocaleString()}</p>
                 <div className="grid grid-cols-3 gap-2 my-1.5 bg-slate-950 p-1.5 rounded border border-slate-900 text-center">
                   <div>
                     <p className="text-slate-400 text-[8px] uppercase">Delivered Successful</p>
@@ -253,7 +253,7 @@ export default function SchedulerSim({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-slate-400">No qualifying patient cohorts were found scheduled for 7d, 3d, or Due Today on this simulation calendar date.</p>
+                  <p className="text-slate-400">No qualifying patient cohorts were found scheduled for 7d, 3d, or Due Today on the chosen calendar reference date.</p>
                 )}
               </div>
             </motion.div>

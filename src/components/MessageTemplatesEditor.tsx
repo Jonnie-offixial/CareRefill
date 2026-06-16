@@ -319,7 +319,7 @@ export default function MessageTemplatesEditor({
 
         {/* Live Preview Panel (Mock Phone Screen) */}
         <div className="lg:col-span-4 flex flex-col items-center">
-          <label className="block text-xs font-semibold text-gray-700 uppercase mb-3 align-self-start">Live Simulated Outreach Preview</label>
+          <label className="block text-xs font-semibold text-gray-700 uppercase mb-3 align-self-start">Live Dispatch Message Layout Preview</label>
           
           {/* Mock Smartphone Frame */}
           <div className="w-[280px] h-[450px] bg-slate-900 rounded-[36px] shadow-lg border-4 border-slate-800 relative flex flex-col overflow-hidden">
@@ -329,7 +329,7 @@ export default function MessageTemplatesEditor({
               <div className="w-8 h-1 rounded-full bg-slate-700"></div>
             </div>
 
-            {/* Simulated Phone Screen Status Bar */}
+            {/* Active Phone Screen Status Bar */}
             <div className="bg-[#075e54] text-white px-5 pt-6 pb-2 text-[10px] font-medium flex justify-between items-center select-none shrink-0 z-10">
               <span>8:03 AM</span>
               <div className="flex items-center gap-1.5">

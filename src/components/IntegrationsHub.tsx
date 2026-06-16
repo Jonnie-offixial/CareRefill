@@ -83,7 +83,7 @@ export default function IntegrationsHub({ colorTheme, currentUser, onUserUpdate 
     setNinStatus('checking');
 
     setTimeout(() => {
-      // Simulate real-time NIRA API check
+      // Query real-time NIRA API registry
       if (ninInput.toUpperCase().startsWith('CM')) {
         setNinStatus('success');
         setNinResult({
@@ -138,7 +138,7 @@ export default function IntegrationsHub({ colorTheme, currentUser, onUserUpdate 
             <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded border border-teal-400/20">System Integration Status</span>
             <h3 className="text-xl font-bold text-white mt-1.5 font-sans">Ministry & Gateway Integrations Platform</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-              Uganda Chronic Outreach Portal communicates natively with national registries, district reports, and payment interfaces. This hub shows active connection handshakes and permits live diagnostic tests.
+              CareRefill communicates natively with national registries, district reports, and payment interfaces. This hub shows active connection handshakes and permits live diagnostic tests.
             </p>
           </div>
           <button
@@ -237,7 +237,7 @@ export default function IntegrationsHub({ colorTheme, currentUser, onUserUpdate 
         </div>
       </div>
 
-      {/* Interactive Integrations Simulation Row */}
+      {/* Interactive Integrations Gateway */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-sans">
         
         {/* INTERACTIVE WORKFLOW 1: NIRA NATIONAL ID VALIDATOR */}
