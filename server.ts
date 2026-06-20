@@ -722,7 +722,7 @@ app.post("/api/gemini/personalize", async (req, res) => {
     - Do not use markdown (bolding with single * is okay for WhatsApp like *healthy*).`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         temperature: 0.7
@@ -732,7 +732,7 @@ app.post("/api/gemini/personalize", async (req, res) => {
     const aiText = response.text || "Fallback message generation.";
     res.json({
       message: aiText.trim(),
-      source: "gemini-2.5-flash",
+      source: "gemini-3.5-flash",
       hasKey: true
     });
   } catch (err) {
@@ -947,7 +947,7 @@ app.post("/api/gemini/consult-draft", async (req, res) => {
     6. Do not include markdown formatting or legal meta headers.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         temperature: 0.2
@@ -956,7 +956,7 @@ app.post("/api/gemini/consult-draft", async (req, res) => {
 
     res.json({
       draft: (response.text || "").trim(),
-      source: "gemini-2.5-flash",
+      source: "gemini-3.5-flash",
       hasKey: true
     });
   } catch (err: any) {
