@@ -4,27 +4,19 @@ import logoUrl from './assets/images/carerefill_logo_1781646744724.jpg';
 import { Pharmacy, Patient, Medication, ReminderLog, SystemStats } from './types';
 
 // Standalone newly created modular files
-import CareRefillDashboard from './components/CareRefillDashboard';
-import AdherenceAnalytics from './components/AdherenceAnalytics';
-import WhatsAppRepliesConsole from './components/WhatsAppRepliesConsole';
-import VitalsProgressTracker from './components/VitalsProgressTracker';
-import CaregiversAlertDesk from './components/CaregiversAlertDesk';
-import LoyaltyRewardsLeaderboard from './components/LoyaltyRewardsLeaderboard';
-import AiPersonalizedMessages from './components/AiPersonalizedMessages';
-import GeminiChatbot from './components/GeminiChatbot';
-
-// Restored pre-existing components
-import PatientRegistry from './components/PatientRegistry';
-import SchedulerSim from './components/SchedulerSim';
-import MessageTemplatesEditor from './components/MessageTemplatesEditor';
-import ClinicConsultDesk from './components/ClinicConsultDesk';
-import AdminPanel from './components/AdminPanel';
-import RoleActorLogin from './components/RoleActorLogin';
-import SettingsPanel from './components/SettingsPanel';
-import IntegrationsHub from './components/IntegrationsHub';
-import MvpRoadmap from './components/MvpRoadmap';
+import DashboardOverview from './components/DashboardOverview';
+import PatientsModule from './components/PatientsModule';
+import HealthFacilitiesModule from './components/HealthFacilitiesModule';
+import MedicationsModule from './components/MedicationsModule';
+import RefillRequestsModule from './components/RefillRequestsModule';
+import OrdersModule from './components/OrdersModule';
+import CommunicationsModule from './components/CommunicationsModule';
+import AnalyticsModule from './components/AnalyticsModule';
+import SupportModule from './components/SupportModule';
+import SettingsModule from './components/SettingsModule';
+import TalkWithUsFab from './components/TalkWithUsFab';
 import LaunchPage from './components/LaunchPage';
-import ExecutiveDashboard from './components/ExecutiveDashboard';
+import RoleActorLogin from './components/RoleActorLogin';
 
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -96,7 +88,7 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
 
   // Navigation tab selections matching the sidebar categories
-  const [activeTab, setActiveTab] = useState<string>('executive');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Mobile sidebar menu sliding overlay drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -116,6 +108,53 @@ export default function App() {
   // Core entities
   const [patients, setPatients] = useState<(Patient & { medication: Medication | null })[]>([]);
   const [reminders, setReminders] = useState<(ReminderLog & { patient_name: string; phone_number: string; condition: string; medication_name: string })[]>([]);
+  
+  // Custom branches doctors state coordinates
+  interface Doctor {
+    id: string;
+    name: string;
+    specialty: string;
+    initials: string;
+    colorBg: string;
+  }
+  const [doctorsList, setDoctorsList] = useState<Doctor[]>([]);
+
+  useEffect(() => {
+    if (!selectedPharmacyId) return;
+    const cacheKey = `carerefill_doctors_${selectedPharmacyId}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      try {
+        setDoctorsList(JSON.parse(cachedData));
+      } catch (e) {
+        console.error("Failed parsing cached doctors", e);
+      }
+    } else {
+      const defaults: Doctor[] = [
+        {
+          id: `${selectedPharmacyId}-doc-1`,
+          name: "Dr. Sarah Mukasa",
+          specialty: "Chief Clinical Adherence Pharmacist",
+          initials: "SM",
+          colorBg: "bg-emerald-500 text-white"
+        },
+        {
+          id: `${selectedPharmacyId}-doc-2`,
+          name: "Dr. Emmanuel Okot",
+          specialty: "Supervisor Relations Officer",
+          initials: "EO",
+          colorBg: "bg-blue-500 text-white"
+        }
+      ];
+      setDoctorsList(defaults);
+      localStorage.setItem(cacheKey, JSON.stringify(defaults));
+    }
+  }, [selectedPharmacyId]);
+
+  // Doctor Creation form states
+  const [newDocName, setNewDocName] = useState("");
+  const [newDocSpecialty, setNewDocSpecialty] = useState("");
+  const [showAddDocForm, setShowAddDocForm] = useState(false);
   
   // Page load status flags
   const [loading, setLoading] = useState(true);
@@ -432,47 +471,18 @@ export default function App() {
   // Sidebar dynamic navigation configuration groups
   const sidebarNavGroups = [
     {
-      group_title: 'Overview',
+      group_title: 'CareRefill Platform',
       links: [
-        { id: 'executive', label: 'Executive Dashboard 🏢', icon: Building2 },
         { id: 'dashboard', label: 'Dashboard', icon: Clock },
-        { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-        { id: 'regional-analytics', label: 'Regional Analytics 📊', icon: BarChart3 }
-      ]
-    },
-    {
-      group_title: 'Patients',
-      links: [
         { id: 'patients', label: 'Patients', icon: Users },
-        { id: 'progress', label: 'Progress Check-In', icon: Activity },
-        { id: 'caregivers', label: 'Caregivers alerts', icon: Heart },
-        { id: 'loyalty', label: 'Loyalty Rewards', icon: Award }
-      ]
-    },
-    {
-      group_title: 'Communication',
-      links: [
-        { id: 'reminders', label: 'Reminders Queue', icon: Bell },
-        { id: 'conversations', label: 'WhatsApp Replies', icon: MessageSquare },
-        { id: 'ai-messages', label: 'AI Messages Draft', icon: Sparkles },
-        { id: 'templates', label: 'Templates customization', icon: Sliders }
-      ]
-    },
-    {
-      group_title: 'Clinical Workspace',
-      links: [
-        { id: 'clinic-desk-appointments', label: 'Appointments Book', icon: Calendar },
-        { id: 'care-desk', label: 'Care Desk 🏥', icon: Sparkles },
-        { id: 'gemini-chatbot', label: 'Gemini Chatbot 💬', icon: MessageSquare },
-        { id: 'facility-info', label: 'Branch Doctors', icon: Users }
-      ]
-    },
-    {
-      group_title: 'SaaS Platform',
-      links: [
-        { id: 'billing-subscriptions', label: 'Subscriptions & Billing 💳', icon: CreditCard },
-        { id: 'integrations', label: 'Integrations Link', icon: Database },
-        { id: 'settings', label: 'Workspace Settings ⚙️', icon: Settings }
+        { id: 'facilities', label: 'Health Facilities', icon: Building2 },
+        { id: 'medications', label: 'Medications', icon: Sparkles },
+        { id: 'refill-requests', label: 'Refill Requests', icon: Activity },
+        { id: 'orders', label: 'Orders', icon: CreditCard },
+        { id: 'communications', label: 'Communications', icon: MessageSquare },
+        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'support', label: 'Support', icon: HelpCircle },
+        { id: 'settings', label: 'Settings', icon: Settings }
       ]
     }
   ];
@@ -526,7 +536,7 @@ export default function App() {
             <select
                value={selectedPharmacyId}
                onChange={(e) => setSelectedPharmacyId(e.target.value)}
-               className="w-full bg-[#041d0e] dark:bg-slate-900 text-white text-xs p-2 rounded-xl focus:outline-none border border-emerald-800 dark:border-slate-800 font-medium cursor-pointer shadow-3xs"
+               className="w-full bg-[#041d0e] dark:bg-slate-900 text-white text-xs p-2 rounded-xl focus:outline-none border border-emerald-800/60 dark:border-slate-800 font-medium cursor-pointer shadow-sm hover:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
             >
               {pharmacies.map((p) => (
                 <option key={p.pharmacy_id} value={p.pharmacy_id} className="text-white bg-[#062c16] dark:bg-slate-900">
@@ -542,7 +552,7 @@ export default function App() {
               // No group-level exclusion, we will do fine-grained link filtering instead
               return (
                 <div key={group.group_title} className="space-y-1 bg-emerald-900/[0.02] dark:bg-slate-900/[0.01] p-1 rounded-2xl">
-                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-440 dark:text-slate-400 tracking-widest block opacity-92 mb-1.5">
+                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-400 dark:text-slate-400 tracking-widest block opacity-92 mb-1.5">
                     {group.group_title}
                   </span>
                   <div className="space-y-0.5">
@@ -734,132 +744,106 @@ export default function App() {
                 className="space-y-6 max-w-7xl mx-auto w-full"
               >
                 
-                {/* View 1: Main aggregate Dashboard dashboard */}
+                {/* View 1: Dashboard Overview */}
                 {activeTab === 'dashboard' && (
-                  <CareRefillDashboard
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
-                    showToast={showToast}
+                  <DashboardOverview
+                    patientsCount={patients.length || 1240}
+                    facilitiesCount={5}
+                    activeRefillRequests={8}
+                    ordersTodayCount={12}
+                    revenueTotal="UGX 1,580,000"
+                    messagesSentCount={148}
+                    recentActivities={[
+                      { id: "act-1", user: "Joy Nabasa", action: "Requested Atorvastatin 20mg Refill", time: "10 mins ago", type: "info" as const, avatar: "JN" },
+                      { id: "act-2", user: "Kampala Branch", action: "Approved 12 pending patient couriers", time: "2 hrs ago", type: "success" as const, avatar: "KB" },
+                      { id: "act-3", user: "Moses Sempampa", action: "WhatsApp delivery warning fail", time: "4 hrs ago", type: "alert" as const, avatar: "MS" },
+                      { id: "act-4", user: "Airtel Pay Gateway", action: "Reconciled UGX 380,000 corporate payment", time: "Yesterday", type: "success" as const, avatar: "AP" }
+                    ]}
+                    upcomingReminders={[
+                      { id: "rem-1", patient_name: "Joy Nabasa", medication: "Atorvastatin 20mg", time: "In 15 mins", channel: "WhatsApp" as const },
+                      { id: "rem-2", patient_name: "Robert Okello", medication: "Metformin 500mg", time: "In 1 hr", channel: "SMS" as const },
+                      { id: "rem-3", patient_name: "Esther Alupo", medication: "Ventolin Inhaler", time: "In 2 hrs", channel: "Email" as const }
+                    ]}
+                    onTriggerQuickAction={(type) => {
+                      if (type === "whatsapp") {
+                        showToast("Manual Alert Initiated", "WhatsApp bulk dispatch cron run queued successfully.", "success");
+                      } else if (type === "enroll") {
+                        setActiveTab("patients");
+                      } else if (type === "report") {
+                        setActiveTab("analytics");
+                      }
+                    }}
                     setActiveTab={setActiveTab}
                   />
                 )}
 
-                {/* View 2: Analytics chart grids stats reports */}
-                {activeTab === 'analytics' && (
-                  <AdherenceAnalytics
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
-                    showToast={showToast}
-                  />
-                )}
-
-                {/* View 3: Registry patient database collection */}
+                {/* View 2: Patients Module */}
                 {activeTab === 'patients' && (
-                  <PatientRegistry
+                  <PatientsModule
                     patients={patients}
-                    onAddPatient={handleAddPatient}
-                    onMarkRefilled={handleMarkRefilled}
                     onToggleStatus={handleToggleStatus}
-                    colorTheme="emerald"
-                  />
-                )}
-
-                {/* View 4: Clinical indicators logs & Vitals tracking */}
-                {activeTab === 'progress' && (
-                  <VitalsProgressTracker
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                    onAddPatient={handleAddPatient}
                     showToast={showToast}
                   />
                 )}
 
-                {/* View 5: Caregivers programs auxiliary SMS contacts */}
-                {activeTab === 'caregivers' && (
-                  <CaregiversAlertDesk
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                {/* View 3: Analytics Module */}
+                {activeTab === 'analytics' && (
+                  <AnalyticsModule />
+                )}
+
+                {/* View 4: Health Facilities Module */}
+                {activeTab === 'facilities' && (
+                  <HealthFacilitiesModule
+                    pharmaciesList={pharmacies}
                     showToast={showToast}
                   />
                 )}
 
-                {/* View 6: Loyalty boards points redemption vouchers */}
-                {activeTab === 'loyalty' && (
-                  <LoyaltyRewardsLeaderboard
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                {/* View 5: Medications Module */}
+                {activeTab === 'medications' && (
+                  <MedicationsModule
                     showToast={showToast}
                   />
                 )}
 
-                {/* View 7: Cron scheduler list alerts logs reminders stream */}
-                {activeTab === 'reminders' && (
-                  <SchedulerSim
-                    reminders={reminders}
-                    onTriggerScheduler={handleTriggerScheduler}
-                    colorTheme="emerald"
-                  />
-                )}
-
-                {/* View 8: WhatsApp/SMS Replies two-way answers simulated client */}
-                {activeTab === 'conversations' && (
-                  <WhatsAppRepliesConsole
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                {/* View 6: Refill Requests Module */}
+                {activeTab === 'refill-requests' && (
+                  <RefillRequestsModule
                     showToast={showToast}
                   />
                 )}
 
-                {/* View 9: AI messages Gemini assistant care drafts reviews */}
-                {activeTab === 'ai-messages' && (
-                  <AiPersonalizedMessages
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    onRefreshData={() => fetchTenantData(selectedPharmacyId)}
+                {/* View 7: Orders Module */}
+                {activeTab === 'orders' && (
+                  <OrdersModule
                     showToast={showToast}
                   />
                 )}
 
-                {/* View 10: Message templates editor customizations */}
-                {activeTab === 'templates' && (
-                  <MessageTemplatesEditor
-                    pharmacyId={selectedPharmacyId}
-                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : "Kampala Road Office"}
-                    colorTheme="emerald"
+                {/* View 8: Communications Module */}
+                {activeTab === 'communications' && (
+                  <CommunicationsModule
+                    showToast={showToast}
                   />
                 )}
 
-                {/* View 11: Appointments list and scheduler */}
-                {activeTab === 'clinic-desk-appointments' && (
-                  <ClinicConsultDesk
-                    patients={patients}
-                    pharmacyId={selectedPharmacyId}
-                    pharmacyName={selectedPharmacy ? selectedPharmacy.pharmacy_name : "Kampala Road Office"}
-                    colorTheme="emerald"
-                    onRefreshPatients={() => fetchTenantData(selectedPharmacyId)}
-                    defaultSubTab="appointments"
+                {/* View 9: Support Module */}
+                {activeTab === 'support' && (
+                  <SupportModule
+                    showToast={showToast}
                   />
                 )}
 
-                {/* View 12a: High-fidelity Executive Corporate Dashboard */}
-                {activeTab === 'executive' && (
-                  <ExecutiveDashboard
-                    currentPharmacyId={selectedPharmacyId}
-                    onSelectPharmacy={(id) => {
-                      setSelectedPharmacyId(id);
-                      fetchTenantData(id);
-                    }}
+                {/* View 10: Settings Module */}
+                {activeTab === 'settings' && (
+                  <SettingsModule
                     showToast={showToast}
                   />
                 )}
 
                 {/* View 12b: Billing, Subscriptions & Mobile Money Payouts Panel */}
-                {activeTab === 'billing-subscriptions' && (
+                {activeTab === 'obsolete-billing' && (
                   <div className="bg-white rounded-3xl border border-gray-150 p-8 shadow-xs space-y-8 text-left">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6">
                       <div className="space-y-1">
@@ -1030,129 +1014,204 @@ export default function App() {
                   </div>
                 )}
 
-                {/* View 12d: Rename MVP+ Roadmap Tab to Care Desk */}
-                {activeTab === 'care-desk' && (
-                  <MvpRoadmap
-                    patients={patients.map(p => ({
-                      patient_id: p.patient_id,
-                      full_name: p.full_name,
-                      condition: p.chronic_condition || "Chronic protocol",
-                      preferred_channel: p.preferred_channel || "WhatsApp",
-                      recommendedAction: p.risk_level === 'High' ? 'Call patient' : p.risk_level === 'Medium' ? 'Extra reminder' : 'Standard loop',
-                      risk: (p.risk_level === 'High' || p.risk_level === 'Medium' || p.risk_level === 'Low') ? p.risk_level : 'Low'
-                    }))}
-                    showToast={showToast}
-                  />
-                )}
+
 
                 {/* View 13: Doctor branch specialists credentials templates */}
-                {activeTab === 'facility-info' && selectedPharmacy && (
-                  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-150 dark:border-slate-800 p-8 shadow-sm space-y-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-emerald-50 rounded-2xl text-brand-green">
-                        <Building2 className="w-6 h-6 text-brand-green" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Care Center Workspace coordinates</h3>
-                        <p className="text-xs text-gray-500">Official medical specialists registry for branch {selectedPharmacy.pharmacy_name}</p>
-                      </div>
-                    </div>
+                {activeTab === 'obsolete-facility' && selectedPharmacy && (() => {
+                  const canManageDoctors = currentUser?.role === 'Admin' || currentUser?.role === 'Executive';
+                  
+                  const handleAddDoctor = (e: React.FormEvent) => {
+                    e.preventDefault();
+                    if (!newDocName.trim() || !newDocSpecialty.trim()) {
+                      showToast("Incomplete specialist information", "Please fill in all medical coordinate inputs.", "error");
+                      return;
+                    }
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                      <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Contact channel</span>
-                        <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Clinic Gateway Mobile</h4>
-                        <p className="text-xs text-teal-700 font-mono font-bold">{selectedPharmacy.phone_number}</p>
-                      </div>
+                    // Compute initials
+                    let clean = newDocName.replace(/^(Dr\.|Dr)\s+/i, '');
+                    const parts = clean.trim().split(/\s+/);
+                    let initials = "MD";
+                    if (parts.length >= 2) {
+                      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+                    } else if (parts.length === 1 && parts[0].length > 0) {
+                      initials = parts[0].substring(0, 2).toUpperCase();
+                    }
 
-                      <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Location coordinates</span>
-                        <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Physical Address coordinates</h4>
-                        <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">{selectedPharmacy.address}</p>
-                      </div>
+                    // Select a modern clinical aura color
+                    const clinicalColors = [
+                      "bg-emerald-500 text-white",
+                      "bg-blue-500 text-white",
+                      "bg-violet-500 text-white",
+                      "bg-rose-500 text-white",
+                      "bg-amber-500 text-white"
+                    ];
+                    const colorBg = clinicalColors[doctorsList.length % clinicalColors.length];
 
-                      <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Monitored Treatment Groups</span>
-                        <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Chronic Adherent Protocols</h4>
-                        <p className="text-xs text-slate-600 dark:text-gray-400">Hypertension • Diabetes • Asthma • HIV/ARV</p>
-                      </div>
-                    </div>
+                    const prefixDocName = newDocName.toLowerCase().startsWith('dr') ? newDocName : `Dr. ${newDocName}`;
 
-                    <div className="border-t border-gray-100 dark:border-slate-800 pt-6">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-450 mb-3">Facility Doctors & specialists</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/20 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800">
-                          <div className="w-10 h-10 rounded-full bg-lime-150 text-[#71B20A] flex items-center justify-center font-bold">SM</div>
+                    const newDoc = {
+                      id: `${selectedPharmacyId}-doc-${Date.now()}`,
+                      name: prefixDocName,
+                      specialty: newDocSpecialty,
+                      initials,
+                      colorBg
+                    };
+
+                    const updated = [...doctorsList, newDoc];
+                    setDoctorsList(updated);
+                    localStorage.setItem(`carerefill_doctors_${selectedPharmacyId}`, JSON.stringify(updated));
+                    
+                    setNewDocName("");
+                    setNewDocSpecialty("");
+                    setShowAddDocForm(false);
+                    showToast("Specialist Registered", `${prefixDocName} has been enrolled in the branch medical registry.`, "success");
+                  };
+
+                  return (
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-150 dark:border-slate-800 p-8 shadow-sm space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b dark:border-slate-800 pb-5">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-brand-green">
+                            <Building2 className="w-6 h-6 text-brand-green" />
+                          </div>
                           <div>
-                            <p className="text-xs font-bold text-gray-900 dark:text-gray-150">Dr. Sarah Mukasa</p>
-                            <p className="text-[10px] text-gray-450">Chief Clinical Adherence Pharmacist</p>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 font-sans tracking-tight">Care Center Workspace coordinates</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Official medical specialists registry for branch {selectedPharmacy.pharmacy_name}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/20 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">EO</div>
-                          <div>
-                            <p className="text-xs font-bold text-gray-900 dark:text-gray-150">Dr. Emmanuel Okot</p>
-                            <p className="text-[10px] text-gray-450">Supervisor Relations Officer</p>
-                          </div>
+
+                        {canManageDoctors && (
+                          <button
+                            onClick={() => setShowAddDocForm(!showAddDocForm)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl cursor-pointer transition duration-200 active:scale-97 flex items-center gap-2 shadow-sm self-start sm:self-center"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>{showAddDocForm ? "Hide Form" : "Add Branch Doctor"}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Expandable modern glassmorphic/neumorphic enrollment form */}
+                      <AnimatePresence>
+                        {canManageDoctors && showAddDocForm && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <form 
+                              onSubmit={handleAddDoctor} 
+                              className="bg-slate-50 dark:bg-slate-950/40 p-6 rounded-2xl border border-dashed dark:border-slate-800 space-y-4 mb-4 transition-all duration-300 relative"
+                            >
+                              <h4 className="text-xs font-black uppercase tracking-widest text-[#84CC16]">Enroll Branch Medical Specialist</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-gray-500 uppercase font-mono tracking-wider">Full Legal Name</label>
+                                  <input
+                                    type="text"
+                                    value={newDocName}
+                                    onChange={(e) => setNewDocName(e.target.value)}
+                                    placeholder="e.g. Dr. Peter Okello"
+                                    className="w-full text-xs font-semibold p-3 bg-white dark:bg-slate-900 text-gray-950 dark:text-white border dark:border-slate-850 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-gray-500 uppercase font-mono tracking-wider">Specialty / Title Designation</label>
+                                  <input
+                                    type="text"
+                                    value={newDocSpecialty}
+                                    onChange={(e) => setNewDocSpecialty(e.target.value)}
+                                    placeholder="e.g. Lead Pediatric Counselor"
+                                    className="w-full text-xs font-semibold p-3 bg-white dark:bg-slate-900 text-gray-950 dark:text-white border dark:border-slate-850 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-end gap-2.5 pt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAddDocForm(false)}
+                                  className="px-4 py-2 text-xs font-bold text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 transition cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="submit"
+                                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl cursor-pointer shadow-sm pr-6 flex items-center gap-1.5"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>Submit Enroll Registry</span>
+                                </button>
+                              </div>
+                            </form>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                        <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Contact channel</span>
+                          <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Clinic Gateway Mobile</h4>
+                          <p className="text-xs text-teal-700 font-mono font-bold">{selectedPharmacy.phone_number}</p>
+                        </div>
+
+                        <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Location coordinates</span>
+                          <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Physical Address coordinates</h4>
+                          <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">{selectedPharmacy.address}</p>
+                        </div>
+
+                        <div className="bg-slate-50 dark:bg-slate-950/20 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block font-mono">Monitored Treatment Groups</span>
+                          <h4 className="text-sm font-bold text-gray-950 dark:text-gray-150">Chronic Adherent Protocols</h4>
+                          <p className="text-xs text-slate-600 dark:text-gray-400">Hypertension • Diabetes • Asthma • HIV/ARV</p>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-100 dark:border-slate-800 pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-450 font-mono">Facility Doctors & specialists ({doctorsList.length})</h4>
+                          {!canManageDoctors && (
+                            <span className="text-[10px] text-gray-450 bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 rounded-md font-mono">
+                              Role constraints restrict registrations
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {doctorsList.map((doc) => (
+                            <div key={doc.id} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/20 p-3.5 rounded-xl border border-gray-100 dark:border-slate-800 relative group overflow-hidden premium-transition hover:border-emerald-500/20 dark:hover:border-emerald-500/10">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-3xs ${doc.colorBg}`}>
+                                {doc.initials}
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-900 dark:text-gray-150">{doc.name}</p>
+                                <p className="text-[10px] text-gray-450 font-medium">{doc.specialty}</p>
+                              </div>
+                              {canManageDoctors && (
+                                <button
+                                  onClick={() => {
+                                    const updated = doctorsList.filter(d => d.id !== doc.id);
+                                    setDoctorsList(updated);
+                                    localStorage.setItem(`carerefill_doctors_${selectedPharmacyId}`, JSON.stringify(updated));
+                                    showToast("Specialist Removed", `${doc.name} removed from the registry.`, "info");
+                                  }}
+                                  className="absolute top-2.5 right-2.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition duration-150 cursor-pointer"
+                                  title="Remove Specialist"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
-                {/* View 14: Settings and Workspace management */}
-                {activeTab === 'settings' && (
-                  <SettingsPanel 
-                    pharmacyId={selectedPharmacyId}
-                    currentPharmacyName={selectedPharmacy?.pharmacy_name}
-                    currentPhoneNumber={selectedPharmacy?.phone_number}
-                    currentAddress={selectedPharmacy?.address}
-                    onBrandingSave={(brandData) => {
-                      if (selectedPharmacy) {
-                        const updated = { 
-                          ...selectedPharmacy, 
-                          pharmacy_name: brandData.name, 
-                          phone_number: brandData.phone,
-                          address: brandData.address,
-                        };
-                        setSelectedPharmacy(updated);
-                        setPharmacies(prev => prev.map(p => p.pharmacy_id === updated.pharmacy_id ? updated : p));
-                      }
-                    }}
-                    showGlobalToast={showToast}
-                  />
-                )}
 
-                {/* View 15: Admin Panel control multi-branch tenant database */}
-                {activeTab === 'admin' && isAdminUser && (
-                  <AdminPanel
-                    currentUser={currentUser}
-                    onUserUpdate={setCurrentUser}
-                    onRefreshAllData={async () => {
-                      const res = await fetch('/api/pharmacies');
-                      if (res.ok) {
-                        setPharmacies(await res.json());
-                      }
-                    }}
-                  />
-                )}
-
-                {/* View 16: Database Hub */}
-                {activeTab === 'integrations' && isAdminUser && (
-                  <IntegrationsHub
-                    colorTheme="emerald"
-                    currentUser={currentUser}
-                    onUserUpdate={setCurrentUser}
-                  />
-                )}
-
-                {/* View 17: Gemini Advisor Companion */}
-                {activeTab === 'gemini-chatbot' && (
-                  <GeminiChatbot
-                    showToast={showToast}
-                    pharmacyName={selectedPharmacy?.pharmacy_name}
-                  />
-                )}
 
               </motion.div>
             )}
@@ -1178,6 +1237,13 @@ export default function App() {
         </footer>
 
       </div>
+
+      {/* Talk With Us Floating Action Button & Live Support Panel */}
+      <TalkWithUsFab 
+        showToast={showToast} 
+        branchName={selectedPharmacy?.pharmacy_name} 
+        branchPhone={selectedPharmacy?.phone_number} 
+      />
 
       {/* Dynamic notifications popup alerts stack container */}
       <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 max-w-sm pointer-events-none">
