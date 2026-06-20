@@ -9,6 +9,59 @@
   .bg-lemon-green-theme {
     background-color: #84CC16;
   }
+  
+  /* Glassmorphism Panel styles */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+  
+  .dark .glass-panel {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(16px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* Aurora Background Glows */
+  .aurora-glow-1 {
+    filter: blur(80px);
+    background: radial-gradient(circle, rgba(132, 204, 22, 0.15) 0%, rgba(132, 204, 22, 0) 70%);
+  }
+
+  .aurora-glow-2 {
+    filter: blur(100px);
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0) 70%);
+  }
+
+  /* Premium interactive transition */
+  .premium-transition {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Spotlight mouse hover glow base card */
+  .spotlight-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .spotlight-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(800px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(132, 204, 22, 0.06), transparent 40%);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .spotlight-card:hover::before {
+    opacity: 1;
+  }
 }
 
 /* Custom scrollbars for professional dashboard layout */

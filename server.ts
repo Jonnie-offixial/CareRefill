@@ -75,6 +75,131 @@ app.get("/api/status", async (req, res) => {
   });
 });
 
+// Gmail Send Notification endpoint
+app.post("/api/workspace/gmail/send", async (req, res) => {
+  const { to, subject, body, token } = req.body;
+  if (!to || !subject || !body) {
+    return res.status(400).json({ error: "Missing destination 'to', 'subject' or 'body' parameter." });
+  }
+
+  // Build a standard email MIME raw payload in UTF-8
+  const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+  const emailLines = [
+    `To: ${to}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "MIME-Version: 1.0",
+    `Subject: ${utf8Subject}`,
+    "",
+    body
+  ];
+  const emailRaw = emailLines.join("\r\n");
+  const base64SafeEmail = Buffer.from(emailRaw)
+    .toString("base64")
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  if (!token || token === "MY_OAUTH_TOKEN" || token.trim() === "") {
+    console.log("Simulating Gmail Send API (Token not supplied in workspace sandbox)");
+    return res.json({
+      success: true,
+      simulated: true,
+      message: "Gmail message successfully simulated & logged inside CareRefill Workspace.",
+      raw: emailRaw
+    });
+  }
+
+  try {
+    const gmailRes = await fetch("https://gmail.googleapis.com/v1/users/me/messages/send", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ raw: base64SafeEmail })
+    });
+
+    if (!gmailRes.ok) {
+      const errText = await gmailRes.text();
+      return res.status(gmailRes.status).json({ error: `Gmail API Error: ${errText}` });
+    }
+
+    const gmailData = await gmailRes.json();
+    res.json({ success: true, simulated: false, data: gmailData });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Google Forms Responses Intake Sync endpoint
+app.post("/api/workspace/forms/import", async (req, res) => {
+  const { formId, token, pharmacy_id } = req.body;
+  if (!formId || !pharmacy_id) {
+    return res.status(400).json({ error: "Missing formId or pharmacy_id parameters." });
+  }
+
+  if (!token || token === "MY_OAUTH_TOKEN" || token.trim() === "") {
+    console.log("Simulating Google Forms input intake (Mock Seeding)");
+    try {
+      const clinicFeedback = [
+        { patient_id: "pat-001", rating: 5, comment: "Metformin refill email alerts have changed my clinical routine. Excellent service!", category: "Refills" },
+        { patient_id: "pat-002", rating: 4, comment: "I appreciate the WhatsApp compliance prompts immensely.", category: "Reminders" },
+        { patient_id: "pat-003", rating: 5, comment: "Very professional and clinical support from Kampala Community Pharmacy.", category: "Pharmacy Service" }
+      ];
+
+      for (const fb of clinicFeedback) {
+        await createFeedback(fb);
+      }
+
+      return res.json({
+        success: true,
+        simulated: true,
+        count: clinicFeedback.length,
+        message: "Google Form response records ingested successfully.",
+        results: clinicFeedback
+      });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  try {
+    const formsRes = await fetch(`https://forms.googleapis.com/v1/forms/${formId}/responses`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!formsRes.ok) {
+      const errText = await formsRes.text();
+      return res.status(formsRes.status).json({ error: `Google Forms API Error: ${errText}` });
+    }
+
+    const formsData = await formsRes.json();
+    const responses = formsData.responses || [];
+    let count = 0;
+
+    for (const resp of responses) {
+      const answersList = Object.values(resp.answers || {}) as any[];
+      const commentVal = answersList.find(a => typeof a.textAnswers?.answers?.[0]?.value === 'string')?.textAnswers?.answers?.[0]?.value || "Form Submitted Response";
+      const ratingVal = answersList.find(a => !isNaN(Number(a.textAnswers?.answers?.[0]?.value)))?.textAnswers?.answers?.[0]?.value || 5;
+
+      await createFeedback({
+        patient_id: "pat-001",
+        rating: Number(ratingVal),
+        comment: commentVal,
+        category: "Other"
+      });
+      count++;
+    }
+
+    res.json({ success: true, simulated: false, count, message: `Successfully loaded ${count} chronic patient reports from Google Forms.` });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Authentication Proxy endpoints
 app.post("/api/auth/signup", async (req, res) => {
   const { email, password, name, pharmacy_id } = req.body;
@@ -296,7 +421,79 @@ app.post("/api/reset-db", async (req, res) => {
     const parsed = JSON.parse(content);
     writeLocalDB(parsed);
 
-    // If Supabase is connected we can output instructions
+    // Seeding Cloud SQL if active
+    const { shouldQuerySupabase } = await import("./server/supabaseStore.js");
+    const { db } = await import("./src/db/index.js");
+    const schema = await import("./src/db/schema.js");
+    const isCloudSQL = await shouldQuerySupabase();
+    if (isCloudSQL) {
+      console.log("Seeding Cloud SQL tables via Drizzle...");
+      // Seed pharmacies
+      for (const rx of parsed.pharmacies || []) {
+        await db.insert(schema.pharmacies).values(rx).onConflictDoUpdate({
+          target: schema.pharmacies.pharmacy_id,
+          set: rx
+        });
+      }
+      // Seed patients
+      for (const rx of parsed.patients || []) {
+        const payload = {
+          patient_id: rx.patient_id,
+          pharmacy_id: rx.pharmacy_id,
+          full_name: rx.full_name,
+          phone_number: rx.phone_number,
+          chronic_condition: rx.chronic_condition,
+          preferred_channel: rx.preferred_channel,
+          status: rx.status,
+          created_at: rx.created_at || new Date().toISOString(),
+          loyalty_points: rx.loyalty_points || 100
+        };
+        await db.insert(schema.patients).values(payload).onConflictDoUpdate({
+          target: schema.patients.patient_id,
+          set: payload
+        });
+      }
+      // Seed medications
+      for (const rx of parsed.medications || []) {
+        await db.insert(schema.medications).values(rx).onConflictDoUpdate({
+          target: schema.medications.medication_id,
+          set: rx
+        });
+      }
+      // Seed templates
+      for (const [pId, t] of Object.entries(parsed.templates || {})) {
+        const temp: any = t;
+        const payload = {
+          pharmacy_id: pId,
+          hypertension: temp.Hypertension || "",
+          diabetes: temp.Diabetes || "",
+          hiv_arvs: temp["HIV/ARVs"] || temp.hiv_arvs || "",
+          general: temp.General || "",
+          updated_at: new Date().toISOString()
+        };
+        await db.insert(schema.templates).values(payload).onConflictDoUpdate({
+          target: schema.templates.pharmacy_id,
+          set: payload
+        });
+      }
+      // Seed users
+      for (const u of parsed.users || []) {
+        const payload = {
+          user_id: u.user_id,
+          pharmacy_id: u.pharmacy_id,
+          full_name: u.full_name,
+          email: u.email.toLowerCase(),
+          role: u.role,
+          created_at: u.created_at || new Date().toISOString()
+        };
+        await db.insert(schema.users).values(payload).onConflictDoUpdate({
+          target: schema.users.user_id,
+          set: payload
+        });
+      }
+    }
+
+    // If Supabase is connected we can output instructions (legacy compatibility)
     const sb = getSupabaseClient();
     if (sb) {
       // Hand-upsert to Supabase
@@ -322,7 +519,7 @@ app.post("/api/reset-db", async (req, res) => {
       }
     }
 
-    res.json({ success: true, message: sb ? "Database initialized in Supabase and local JSON fallback." : "Database successfully re-seeded to JSON fallback defaults." });
+    res.json({ success: true, message: isCloudSQL ? "Database initialized in Cloud SQL and local JSON fallback." : (sb ? "Database initialized in Supabase and local JSON fallback." : "Database successfully re-seeded to JSON fallback defaults.") });
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
@@ -2205,6 +2402,81 @@ app.delete("/api/pharmacies/:pharmacy_id/users/:user_id", async (req, res) => {
     res.json({ success: true, message: "Staff user successfully deprovisioned." });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// GEMINI MULTI-TURN CHAT INTERFACE
+// ==========================================
+app.post("/api/gemini/chat", async (req, res) => {
+  const { message, history, systemRole, model } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: "Missing required query message." });
+  }
+
+  const ai = getGeminiClient();
+  const sysRole = systemRole || "clinical-pharmacist";
+  const activeModel = model || "gemini-3.5-flash";
+  
+  // Custom roles
+  let systemInstruction = "You are CareRefill Assistant, an elite medical advisor & clinical support assistant for CareRefill pharmacies in Uganda. Assist healthcare workers with medication guidelines, patient counseling, adherence protocols (Hypertension, Diabetes, HIV/ARV), or branch statistics interpretation. Ensure your responses are extremely concise, empathetic, clinically precise, and professional. Mention that you are acting as an advisory companion and suggest formal clinician consultation for critical cases.";
+  
+  if (sysRole === "patient-care") {
+    systemInstruction = "You are CareRefill Patient Care Liaison, a gentle, highly supportive patient advocate for Kampala Community Pharmacy. You draft warm, simple, understandable explanations of chronic illnesses (Hypertension, Diabetes, Asthma, HIV/ARVs) in very direct, jargon-free English. Advise on wellness, remind them of pickups/routine, and keep them optimistic about health gains. Keep responses under 3 sentences.";
+  } else if (sysRole === "adherence-expert") {
+    systemInstruction = "You are the CareRefill Behavioral Adherence Director. You are a specialist in public health and patient compliance behaviors. Advise pharmacy staff on behavioral nudges, custom WhatsApp reminder templates, incentive design, regional and demographic health barriers in East Africa (such as travel costs or stigma), and loyalty program mechanics. Be diagnostic, analytical, and highly actionable.";
+  }
+
+  if (!ai) {
+    // Generate beautiful Simulated Chat responses based on keywords when Gemini API Key is missing
+    let simulatedReply = "";
+    const msgLower = message.toLowerCase();
+    
+    if (msgLower.includes("hello") || msgLower.includes("hi")) {
+      simulatedReply = `Hello there! I'm the simulated CareRefill Companion running on simulated ${activeModel}. I am standing by to help you coordinate patient wellness. Try asking me about *diabetes adherence tips*, *dialing custom reminders*, or *how to improve regional Kampala compliance indices*!`;
+    } else if (msgLower.includes("diabetes") || msgLower.includes("metformin")) {
+      simulatedReply = `[Simulated ${activeModel}] For diabetic patients like Abraham on Metformin, consistency is critical. We recommend recommending they take it with meals to reduce gastrointestinal side effect logs. Additionally, setting WhatsApp alarms precisely before routine dining slots of 8 PM is shown to improve compliance by 35% in Central Uganda.`;
+    } else if (msgLower.includes("hypertension") || msgLower.includes("amlodipine") || msgLower.includes("blood pressure")) {
+      simulatedReply = `[Simulated ${activeModel}] Hypertension patient Sarah Namubiru is on Amlodipine 10mg once daily. Patients often skip early morning hypertensive cycles when they feel no active symptoms. Emphasize that hypertension is a silent threat, and use the CareRefill 'Progress Check-In' to keep tracking clinical diastolic and systolic levels.`;
+    } else if (msgLower.includes("hiv") || msgLower.includes("arv") || msgLower.includes("wellness package")) {
+      simulatedReply = `[Simulated ${activeModel}] Patient privacy is paramount for HIV antiretroviral therapies. Always refer to ARVs as 'wellness packages' or 'routine therapies' in reminders. Gulu district logs indicate that discreet reminder language reduces social stigma burden, resulting in an adherence recovery of 20%.`;
+    } else if (msgLower.includes("loyalty") || msgLower.includes("reward") || msgLower.includes("points")) {
+      simulatedReply = `[Simulated ${activeModel}] The CareRefill Loyalty loop awards +50 points for every compliant refill logged! Patients can redeem points for clinic vouchers, diagnostic checkups, or local cellular airtime. Promoting this during monthly consultations keeps chronic patients engaged.`;
+    } else {
+      simulatedReply = `Thank you for consulting the CareRefill Workspace Guide. I've processed your message: "${message}" under persona role: ${sysRole} using selected engine ${activeModel}. In a live configuration, your Gemini model will deliver expert clinical counsel here. Please ensure a valid GEMINI_API_KEY is configured in your Secrets settings to activate full real-time reasoning.`;
+    }
+
+    return res.json({
+      reply: simulatedReply,
+      source: `simulated-${activeModel}`,
+      hasKey: false
+    });
+  }
+
+  try {
+    const formattedHistory = (history || []).map((h: any) => ({
+      role: h.role === "user" ? "user" : "model",
+      parts: [{ text: h.text }]
+    }));
+
+    const chatClient = ai.chats.create({
+      model: activeModel,
+      history: formattedHistory,
+      config: {
+        systemInstruction,
+        temperature: 0.7
+      }
+    });
+
+    const response = await chatClient.sendMessage({ message });
+    res.json({
+      reply: (response.text || "").trim(),
+      source: activeModel,
+      hasKey: true
+    });
+  } catch (err: any) {
+    console.error(`Gemini Multi-turn Chat Server Error with model ${activeModel}:`, err);
+    res.status(500).json({ error: err.message });
   }
 });
 

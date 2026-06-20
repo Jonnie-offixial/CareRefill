@@ -11,6 +11,7 @@ import VitalsProgressTracker from './components/VitalsProgressTracker';
 import CaregiversAlertDesk from './components/CaregiversAlertDesk';
 import LoyaltyRewardsLeaderboard from './components/LoyaltyRewardsLeaderboard';
 import AiPersonalizedMessages from './components/AiPersonalizedMessages';
+import GeminiChatbot from './components/GeminiChatbot';
 
 // Restored pre-existing components
 import PatientRegistry from './components/PatientRegistry';
@@ -462,6 +463,7 @@ export default function App() {
       links: [
         { id: 'clinic-desk-appointments', label: 'Appointments Book', icon: Calendar },
         { id: 'care-desk', label: 'Care Desk 🏥', icon: Sparkles },
+        { id: 'gemini-chatbot', label: 'Gemini Chatbot 💬', icon: MessageSquare },
         { id: 'facility-info', label: 'Branch Doctors', icon: Users }
       ]
     },
@@ -481,19 +483,19 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row bg-[#FAFAFA] dark:bg-white text-gray-900 font-sans`}>
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAFAFA] dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans premium-transition">
       
       {/* Mobile Header Bar */}
-      <header className="md:hidden bg-white text-slate-800 px-4 py-3 flex items-center justify-between border-b border-lime-150 z-50 shadow-sm shrink-0">
+      <header className="md:hidden bg-white/90 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-white px-4 py-3 flex items-center justify-between border-b border-lime-150 dark:border-slate-800 z-50 shadow-sm shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg overflow-hidden bg-[#84CC16] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg overflow-hidden bg-emerald-600 flex items-center justify-center shadow-sm">
             <span className="text-white font-extrabold text-sm select-none">CR</span>
           </div>
-          <span className="font-sans font-black tracking-tight text-slate-800 text-sm">CareRefill</span>
+          <span className="font-sans font-black tracking-tight text-slate-800 dark:text-gray-100 text-sm">CareRefill</span>
         </div>
         <button 
           onClick={() => setMobileMenuOpen(prev => !prev)}
-          className="p-1.5 rounded-lg text-[#84CC16] hover:bg-lime-50 transition-colors focus:outline-none"
+          className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors focus:outline-none"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -501,8 +503,8 @@ export default function App() {
 
       {/* Left Sidebar Menu Drawer (Visible on md+ or conditional drawer on mobile) */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-[#062c16] text-emerald-100 flex flex-col justify-between transform transition-transform duration-300 ease-in-out shrink-0
-        md:relative md:translate-x-0 border-r border-[#041d0e]
+        fixed inset-y-0 left-0 z-40 w-64 bg-emerald-950/98 dark:bg-slate-950 text-emerald-100 dark:text-slate-300 flex flex-col justify-between transform transition-transform duration-300 ease-in-out shrink-0
+        md:relative md:translate-x-0 border-r border-[#041d0e] dark:border-slate-900 backdrop-blur-lg
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         
@@ -510,24 +512,24 @@ export default function App() {
         <div className="flex-1 flex flex-col overflow-y-auto">
           
           {/* Logo Brand coordinates */}
-          <div className="p-4 flex items-center gap-2.5 border-b border-[#041d0e] bg-emerald-950/40">
-            <img src={logoUrl} alt="CareRefill Logo" className="w-8 h-8 rounded-xl object-contain shrink-0" />
+          <div className="p-4 flex items-center gap-2.5 border-b border-[#041d0e] dark:border-slate-900 bg-emerald-900/10 dark:bg-slate-900/30">
+            <img src={logoUrl} alt="CareRefill Logo" className="w-8 h-8 rounded-xl object-contain shrink-0 active:rotate-12 transition-transform duration-300" />
             <div>
               <h1 className="font-sans font-black tracking-tight text-white text-sm">CareRefill</h1>
-              <span className="text-[10px] text-emerald-300 uppercase font-black tracking-wider block">Workspace Desk</span>
+              <span className="text-[10px] text-emerald-400 dark:text-emerald-500 uppercase font-black tracking-wider block">Workspace Desk</span>
             </div>
           </div>
 
           {/* Active Tenant branch selector dropdown */}
-          <div className="px-4 py-3 border-b border-[#041d0e] bg-emerald-950/20">
-            <label className="text-[9px] text-emerald-300 font-bold uppercase tracking-widest block mb-1">Active Office Center Log</label>
+          <div className="px-4 py-3 border-b border-[#041d0e] dark:border-slate-900 bg-emerald-900/20 dark:bg-slate-900/10">
+            <label className="text-[9px] text-emerald-400 dark:text-slate-400 font-bold uppercase tracking-widest block mb-1">Active Office Center Log</label>
             <select
                value={selectedPharmacyId}
                onChange={(e) => setSelectedPharmacyId(e.target.value)}
-               className="w-full bg-[#041d0e] text-white text-xs p-2 rounded-xl focus:outline-none border border-emerald-800 font-medium cursor-pointer shadow-3xs"
+               className="w-full bg-[#041d0e] dark:bg-slate-900 text-white text-xs p-2 rounded-xl focus:outline-none border border-emerald-800 dark:border-slate-800 font-medium cursor-pointer shadow-3xs"
             >
               {pharmacies.map((p) => (
-                <option key={p.pharmacy_id} value={p.pharmacy_id} className="text-white bg-[#062c16]">
+                <option key={p.pharmacy_id} value={p.pharmacy_id} className="text-white bg-[#062c16] dark:bg-slate-900">
                   {p.pharmacy_name}
                 </option>
               ))}
@@ -539,8 +541,8 @@ export default function App() {
             {sidebarNavGroups.map((group) => {
               // No group-level exclusion, we will do fine-grained link filtering instead
               return (
-                <div key={group.group_title} className="space-y-1">
-                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-300 tracking-widest block opacity-92">
+                <div key={group.group_title} className="space-y-1 bg-emerald-900/[0.02] dark:bg-slate-900/[0.01] p-1 rounded-2xl">
+                  <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-440 dark:text-slate-400 tracking-widest block opacity-92 mb-1.5">
                     {group.group_title}
                   </span>
                   <div className="space-y-0.5">
@@ -559,14 +561,14 @@ export default function App() {
                           key={link.id}
                           onClick={() => handleSidebarClick(link.id)}
                           className={`
-                            w-full text-left py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer
+                            w-full text-left py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-200 cursor-pointer hover:translate-x-1.5
                             ${isActive 
-                              ? 'bg-[#84CC16] text-white font-bold shadow-md shadow-lime-950/40 scale-[0.98]' 
-                              : 'text-emerald-100 hover:bg-emerald-900/50 hover:text-white'
+                              ? 'bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-900/30 scale-[0.98]' 
+                              : 'text-emerald-100 hover:bg-emerald-900/40 hover:text-white dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-slate-200'
                             }
                           `}
                         >
-                          <link.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-emerald-300'}`} />
+                          <link.icon className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isActive ? 'text-white scale-110' : 'text-emerald-400 dark:text-slate-500 group-hover:scale-110'}`} />
                           <span>{link.label}</span>
                         </button>
                       );
@@ -623,10 +625,10 @@ export default function App() {
       </aside>
 
       {/* Main Right Area Viewport scroll-pane */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA] dark:bg-slate-950 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA] dark:bg-slate-950 overflow-hidden relative">
         
         {/* Top bar control coordinates header */}
-        <header className="bg-white dark:bg-slate-900 border-b border-gray-150/80 dark:border-slate-800 shrink-0 select-none pb-4 pt-4 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-3xs z-30">
+        <header className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-150/80 dark:border-slate-800 shrink-0 select-none pb-4 pt-4 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-3xs z-30">
           <div>
             <h2 className="text-lg font-black tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span>
@@ -643,6 +645,7 @@ export default function App() {
                  activeTab === 'clinic-desk-appointments' ? 'Clinic Scheduled appointments' : 
                  activeTab === 'clinic-desk-consults' ? 'Clinic Q&A desk' : 
                  activeTab === 'facility-info' ? 'Doctors & specialists directories' : 
+                 activeTab === 'gemini-chatbot' ? 'Gemini Advisor Companion 💬' : 
                  activeTab === 'settings' ? 'Branding settings' : 
                  'Control Desk Console'}
               </span>
@@ -710,7 +713,10 @@ export default function App() {
         </header>
 
         {/* Central screen workspace scroll area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 relative overflow-x-hidden z-25">
+          {/* Animated Mesh/Aurora Glows (SaaS 2026 UI layout) */}
+          <div className="absolute top-[10%] left-[10%] w-[350px] h-[350px] aurora-glow-1 pointer-events-none rounded-full" />
+          <div className="absolute bottom-[20%] right-[10%] w-[450px] h-[450px] aurora-glow-2 pointer-events-none rounded-full animate-pulse pointer-events-none duration-1000" />
           
           <AnimatePresence mode="wait">
             {loading ? (
@@ -1137,6 +1143,14 @@ export default function App() {
                     colorTheme="emerald"
                     currentUser={currentUser}
                     onUserUpdate={setCurrentUser}
+                  />
+                )}
+
+                {/* View 17: Gemini Advisor Companion */}
+                {activeTab === 'gemini-chatbot' && (
+                  <GeminiChatbot
+                    showToast={showToast}
+                    pharmacyName={selectedPharmacy?.pharmacy_name}
                   />
                 )}
 

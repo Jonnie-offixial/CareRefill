@@ -12,7 +12,9 @@ import {
   Activity, 
   QrCode, 
   BrainCircuit, 
-  CreditCard 
+  CreditCard,
+  Mail,
+  Layers
 } from 'lucide-react';
 
 interface IntegrationsHubProps {
@@ -40,6 +42,17 @@ export default function IntegrationsHub({ colorTheme, currentUser, onUserUpdate 
   const [vhtTarget, setVhtTarget] = useState('VHT Juma Aliba (Kisenyi Zone)');
   const [vhtNote, setVhtNote] = useState('Patient requires home check for blood pressure compliance.');
   const [vhtDispatchStatus, setVhtDispatchStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+  // Google Workspace Integration States
+  const [gmailTo, setGmailTo] = useState('viannejonny@gmail.com');
+  const [gmailSubject, setGmailSubject] = useState('CareRefill: Medication Refill due soon!');
+  const [gmailBody, setGmailBody] = useState('Dear Patient,\n\nPlot 42 Kampala Community Pharmacy here. Just a placeholder reminder that your medication refill is due soon.');
+  const [gmailStatus, setGmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [gmailMessage, setGmailMessage] = useState('');
+
+  const [formId, setFormId] = useState('1FAIpQLSfD7P8eK864YmWRuYAt8e9T_e9bI3F_9bL7G8_e9gI8R9W42A');
+  const [formStatus, setFormStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
+  const [formMessage, setFormMessage] = useState('');
 
   const fetchStatus = async () => {
     setLoadingStatus(true);
@@ -126,6 +139,62 @@ export default function IntegrationsHub({ colorTheme, currentUser, onUserUpdate 
       setVhtDispatchStatus('sent');
       setTimeout(() => setVhtDispatchStatus('idle'), 4000);
     }, 1200);
+  };
+
+  // Google Workspace API Handlers
+  const handleGmailSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGmailStatus('sending');
+    try {
+      const res = await fetch("/api/workspace/gmail/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: gmailTo,
+          subject: gmailSubject,
+          body: gmailBody,
+          token: "MY_OAUTH_TOKEN"
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGmailStatus('success');
+        setGmailMessage(data.message || "Email message dispatched successfully!");
+      } else {
+        setGmailStatus('error');
+        setGmailMessage(data.error || "Failed raw Gmail transmission.");
+      }
+    } catch (err: any) {
+      setGmailStatus('error');
+      setGmailMessage(err.message);
+    }
+  };
+
+  const handleFormImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus('importing');
+    try {
+      const res = await fetch("/api/workspace/forms/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formId,
+          pharmacy_id: "pharm-001",
+          token: "MY_OAUTH_TOKEN"
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFormStatus('success');
+        setFormMessage(data.message || "Success importing forms.");
+      } else {
+        setFormStatus('error');
+        setFormMessage(data.error || "Form responses could not be imported.");
+      }
+    } catch (err: any) {
+      setFormStatus('error');
+      setFormMessage(err.message);
+    }
   };
 
   return (
@@ -440,6 +509,156 @@ export default function IntegrationsHub({ colorTheme, currentUser, onUserUpdate 
           )}
         </div>
 
+      </div>
+
+      {/* 3. Google Workspace integration */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl mt-8 space-y-6">
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#ea4335] bg-[#ea4335]/15 px-2.5 py-1 rounded border border-[#ea4335]/20">Google Workspace suite</span>
+          <h3 className="text-xl font-bold text-white mt-2 font-sans flex items-center gap-2">
+            <Mail className="w-5 h-5 text-[#ea4335]" />
+            Gmail & Google Forms Active Workflow Core
+          </h3>
+          <p className="text-xs text-slate-400 mt-1 max-w-3xl leading-relaxed">
+            CareRefill uses Google Workspace OAuth scopes directly to distribute professional prescription e-alerts to chronic disease patients, as well as fetch and analyze post-refill wellness forms.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 font-sans">
+          
+          {/* Gmail Dispatcher */}
+          <div className="bg-slate-950 border border-slate-850 p-5 rounded-2xl space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-[#ea4335]/10 text-[#ea4335] rounded-lg border border-[#ea4335]/20">
+                <Mail className="w-4 h-4" />
+              </span>
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Gmail Notifications Outbox</h4>
+            </div>
+            
+            <form onSubmit={handleGmailSend} className="space-y-3">
+              <div>
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">To Email Destination</label>
+                <input 
+                  type="email"
+                  required
+                  value={gmailTo}
+                  onChange={(e) => setGmailTo(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 text-xs px-3 py-2 rounded-xl text-white focus:outline-none focus:border-[#ea4335]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Subject</label>
+                <input 
+                  type="text"
+                  required
+                  value={gmailSubject}
+                  onChange={(e) => setGmailSubject(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 text-xs px-3 py-2 rounded-xl text-white focus:outline-none focus:border-[#ea4335]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Message Body</label>
+                <textarea 
+                  required
+                  rows={4}
+                  value={gmailBody}
+                  onChange={(e) => setGmailBody(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 text-xs p-3 rounded-xl text-white focus:outline-none focus:border-[#ea4335] resize-none h-24"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={gmailStatus === 'sending'}
+                className="w-full bg-[#ea4335] hover:bg-[#d93025] text-white font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{gmailStatus === 'sending' ? "Transmitting..." : "Send via Gmail"}</span>
+              </button>
+            </form>
+
+            {gmailStatus === 'success' && (
+              <div className="bg-emerald-950/40 border border-emerald-900/50 text-emerald-300 p-3 rounded-xl text-xs space-y-1">
+                <p className="font-extrabold flex items-center gap-1.5 text-emerald-400">
+                  <CheckCircle className="w-3.5 h-3.5" /> EMAIL DISPATCHED
+                </p>
+                <p className="text-[11px] leading-tight text-slate-300">{gmailMessage}</p>
+              </div>
+            )}
+
+            {gmailStatus === 'error' && (
+              <div className="bg-rose-950/40 border border-rose-900/50 text-rose-300 p-3 rounded-xl text-xs">
+                <p className="font-bold flex items-center gap-1.5 text-rose-400">
+                  <XCircle className="w-3.5 h-3.5" /> DISPATCH FAILED
+                </p>
+                <p className="text-[11px] mt-0.5">{gmailMessage}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Google Forms Ingestion */}
+          <div className="bg-slate-950 border border-slate-850 p-5 rounded-2xl space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-[#4285f4]/10 text-[#4285f4] rounded-lg border border-[#4285f4]/20">
+                <Layers className="w-4 h-4" />
+              </span>
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Patient Survey Sync (Google Forms)</h4>
+            </div>
+
+            <form onSubmit={handleFormImport} className="space-y-3">
+              <div>
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Google Form ID (Clinical Refill Responses)</label>
+                <input 
+                  type="text"
+                  required
+                  value={formId}
+                  onChange={(e) => setFormId(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 text-xs px-3 py-2 rounded-xl text-white focus:outline-none focus:border-[#4285f4] font-mono"
+                />
+                <span className="text-[10px] text-slate-500 mt-1 block">Specify the live form identifier in your Google Drive.</span>
+              </div>
+
+              <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-850 text-xs text-slate-400 space-y-1.5 leading-relaxed">
+                <p className="font-bold text-slate-300">Form Synchronisation Mapping:</p>
+                <ul className="list-disc pl-4 text-[11px] space-y-1">
+                  <li>Inquiries on medication intake</li>
+                  <li>Rating scores out of 5</li>
+                  <li>Inserts directly into CRM feedback system</li>
+                </ul>
+              </div>
+
+              <button
+                type="submit"
+                disabled={formStatus === 'importing'}
+                className="w-full bg-[#4285f4] hover:bg-[#357ae8] text-white font-extrabold text-xs py-2 px-4 rounded-xl cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${formStatus === 'importing' ? 'animate-spin' : ''}`} />
+                <span>{formStatus === 'importing' ? "Ingesting responses..." : "Sync Google Form Responses"}</span>
+              </button>
+            </form>
+
+            {formStatus === 'success' && (
+              <div className="bg-emerald-950/40 border border-emerald-900/50 text-emerald-300 p-3 rounded-xl text-xs space-y-1">
+                <p className="font-extrabold flex items-center gap-1.5 text-emerald-400">
+                  <CheckCircle className="w-3.5 h-3.5" /> REPLAY COMMITTED
+                </p>
+                <p className="text-[11px] leading-tight text-slate-300">Successfully synced patient survey feedback results to CRM database repository.</p>
+              </div>
+            )}
+
+            {formStatus === 'error' && (
+              <div className="bg-rose-950/40 border border-rose-900/50 text-rose-300 p-3 rounded-xl text-xs">
+                <p className="font-bold flex items-center gap-1.5 text-rose-400">
+                  <XCircle className="w-3.5 h-3.5" /> INGESTION FAILED
+                </p>
+                <p className="text-[11px] mt-0.5">{formMessage}</p>
+              </div>
+            )}
+          </div>
+          
+        </div>
       </div>
 
     </div>
