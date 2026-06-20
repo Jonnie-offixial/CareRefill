@@ -593,150 +593,152 @@ export default function ClinicConsultDesk({
       {/* Primary Dashboard Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-         {/* Left Side: Clinician Console Navigation tabs */}
-        <div className="md:col-span-1 space-y-4 font-sans">
-          <div className="bg-white rounded-2xl border p-4 flex flex-col gap-1 shadow-3xs text-xs">
-            <button
-              onClick={() => setActiveSubTab('appointments')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'appointments' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-slate-400" /> Appointments
-              </span>
-              {appointments.filter(a => a.status === 'Requested').length > 0 && (
-                <span className="text-[9px] bg-indigo-650 font-black text-white px-2 py-0.5 rounded-full">
-                  {appointments.filter(a => a.status === 'Requested').length}
+        {/* Left Side: Clinician Console Navigation tabs - hidden if only showing appointments */}
+        {defaultSubTab !== 'appointments' && (
+          <div className="md:col-span-1 space-y-4 font-sans">
+            <div className="bg-white rounded-2xl border p-4 flex flex-col gap-1 shadow-3xs text-xs">
+              <button
+                onClick={() => setActiveSubTab('appointments')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'appointments' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-400" /> Appointments
                 </span>
-              )}
-            </button>
+                {appointments.filter(a => a.status === 'Requested').length > 0 && (
+                  <span className="text-[9px] bg-indigo-650 font-black text-white px-2 py-0.5 rounded-full">
+                    {appointments.filter(a => a.status === 'Requested').length}
+                  </span>
+                )}
+              </button>
 
-            <button
-              onClick={() => setActiveSubTab('consults')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'consults' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-slate-400" /> Vitals Consultation
-              </span>
-              {consultations.filter(c => !c.answer).length > 0 && (
-                <span className="text-[9px] bg-rose-500 font-black text-white px-2 py-0.5 rounded-full">
-                  {consultations.filter(c => !c.answer).length}
+              <button
+                onClick={() => setActiveSubTab('consults')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'consults' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-slate-400" /> Vitals Consultation
                 </span>
-              )}
-            </button>
+                {consultations.filter(c => !c.answer).length > 0 && (
+                  <span className="text-[9px] bg-rose-500 font-black text-white px-2 py-0.5 rounded-full">
+                    {consultations.filter(c => !c.answer).length}
+                  </span>
+                )}
+              </button>
 
-            <button
-              onClick={() => setActiveSubTab('progress')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'progress' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Stethoscope className="w-4 h-4 text-slate-400" /> Patient Vitals Map
-              </span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-405" />
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab('feedback')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'feedback' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-slate-400" /> NPS Feedback logs
-              </span>
-              <span className="text-[9.5px] font-bold text-amber-600 bg-amber-50 px-1.5 border border-amber-200 rounded-md">
-                {avgNPSRating}★
-              </span>
-            </button>
-
-            <div className="border-t border-dashed my-2"></div>
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 px-3 font-bold mb-1">MVP+ ROADMAP</div>
-
-            <button
-              onClick={() => setActiveSubTab('ai-alerts')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'ai-alerts' ? 'bg-emerald-50 text-emerald-800 font-bold border-l-3 border-emerald-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-600" /> AI Alerts Queue
-              </span>
-              {aiDraftsList.filter(d => d.status === 'Pending Review').length > 0 && (
-                <span className="text-[9px] bg-emerald-650 font-black text-white px-2 py-0.5 rounded-full">
-                  {aiDraftsList.filter(d => d.status === 'Pending Review').length}
+              <button
+                onClick={() => setActiveSubTab('progress')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'progress' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4 text-slate-400" /> Patient Vitals Map
                 </span>
-              )}
-            </button>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-405" />
+              </button>
 
-            <button
-              onClick={() => setActiveSubTab('inventory')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'inventory' ? 'bg-amber-50 text-amber-900 font-bold border-l-3 border-amber-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-amber-600" /> Stock Forecasting
-              </span>
-              {inventoryList.some(i => i.current_stock < 35) && (
-                <span className="text-[8px] bg-amber-600 text-white font-extrabold px-1.5 rounded uppercase leading-5">LOW</span>
-              )}
-            </button>
+              <button
+                onClick={() => setActiveSubTab('feedback')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'feedback' ? 'bg-indigo-50 text-indigo-750 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-slate-400" /> NPS Feedback logs
+                </span>
+                <span className="text-[9.5px] font-bold text-amber-600 bg-amber-50 px-1.5 border border-amber-200 rounded-md">
+                  {avgNPSRating}★
+                </span>
+              </button>
 
-            <button
-              onClick={() => setActiveSubTab('billing')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'billing' ? 'bg-indigo-50 text-indigo-950 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-cyan-600" /> Subscription Payments
-              </span>
-              <span className="text-[9px] bg-cyan-600 font-black text-white px-2 py-0.5 rounded-full">SaaS</span>
-            </button>
+              <div className="border-t border-dashed my-2"></div>
+              <div className="text-[9px] uppercase tracking-wider text-slate-400 px-3 font-bold mb-1">MVP+ ROADMAP</div>
 
-            <button
-              onClick={() => setActiveSubTab('reports')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
-                activeSubTab === 'reports' ? 'bg-emerald-50 text-emerald-950 font-bold border-l-3 border-emerald-600' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-emerald-600" /> Compliance Reports
-              </span>
-              <span className="text-[9px] bg-emerald-600 font-black text-white px-1.5 py-0.5 rounded">NEW</span>
-            </button>
-          </div>
+              <button
+                onClick={() => setActiveSubTab('ai-alerts')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'ai-alerts' ? 'bg-emerald-50 text-emerald-800 font-bold border-l-3 border-emerald-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600" /> AI Alerts Queue
+                </span>
+                {aiDraftsList.filter(d => d.status === 'Pending Review').length > 0 && (
+                  <span className="text-[9px] bg-emerald-650 font-black text-white px-2 py-0.5 rounded-full">
+                    {aiDraftsList.filter(d => d.status === 'Pending Review').length}
+                  </span>
+                )}
+              </button>
 
-          {/* Quick clinical stats summary card */}
-          <div className="bg-slate-50 border p-4 rounded-2xl flex flex-col gap-3.5 font-sans">
-            <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
-              <ClipboardList className="w-4 h-4 text-slate-500" />
-              Practice Status
-            </h4>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="bg-white border rounded-xl p-2.5">
-                <p className="text-[9px] uppercase text-gray-400 font-bold">Unconfirmed</p>
-                <p className="text-lg font-black text-gray-800 mt-0.5">
-                  {appointments.filter(a => a.status === 'Requested').length}
-                </p>
-              </div>
-              <div className="bg-white border rounded-xl p-2.5">
-                <p className="text-[9px] uppercase text-gray-400 font-bold">Open Questions</p>
-                <p className="text-lg font-black text-rose-600 mt-0.5">
-                  {consultations.filter(c => !c.answer).length}
-                </p>
+              <button
+                onClick={() => setActiveSubTab('inventory')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'inventory' ? 'bg-amber-50 text-amber-900 font-bold border-l-3 border-amber-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-amber-600" /> Stock Forecasting
+                </span>
+                {inventoryList.some(i => i.current_stock < 35) && (
+                  <span className="text-[8px] bg-amber-600 text-white font-extrabold px-1.5 rounded uppercase leading-5">LOW</span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveSubTab('billing')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'billing' ? 'bg-indigo-50 text-indigo-950 font-bold border-l-3 border-indigo-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-cyan-600" /> Subscription Payments
+                </span>
+                <span className="text-[9px] bg-cyan-600 font-black text-white px-2 py-0.5 rounded-full">SaaS</span>
+              </button>
+
+              <button
+                onClick={() => setActiveSubTab('reports')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center justify-between ${
+                  activeSubTab === 'reports' ? 'bg-emerald-50 text-emerald-950 font-bold border-l-3 border-emerald-600' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-emerald-600" /> Compliance Reports
+                </span>
+                <span className="text-[9px] bg-emerald-600 font-black text-white px-1.5 py-0.5 rounded">NEW</span>
+              </button>
+            </div>
+
+            {/* Quick clinical stats summary card */}
+            <div className="bg-slate-50 border p-4 rounded-2xl flex flex-col gap-3.5 font-sans">
+              <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
+                <ClipboardList className="w-4 h-4 text-slate-500" />
+                Practice Status
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="bg-white border rounded-xl p-2.5">
+                  <p className="text-[9px] uppercase text-gray-400 font-bold">Unconfirmed</p>
+                  <p className="text-lg font-black text-gray-800 mt-0.5">
+                    {appointments.filter(a => a.status === 'Requested').length}
+                  </p>
+                </div>
+                <div className="bg-white border rounded-xl p-2.5">
+                  <p className="text-[9px] uppercase text-gray-400 font-bold">Open Questions</p>
+                  <p className="text-lg font-black text-rose-600 mt-0.5">
+                    {consultations.filter(c => !c.answer).length}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Right Side: Tab panel contents */}
-        <div className="md:col-span-3">
+        <div className={defaultSubTab === 'appointments' ? "md:col-span-4" : "md:col-span-3"}>
           
           {/* TAB 1: BOOKED APPOINTMENTS LIST */}
           {activeSubTab === 'appointments' && (

@@ -537,9 +537,7 @@ export default function App() {
           {/* Dynamic Map groupings links */}
           <nav className="p-3 space-y-5">
             {sidebarNavGroups.map((group) => {
-              // Hide integrations & admin links from normal nursing staff optionally as configured
-              if (group.group_title === 'SaaS Platform' && !isAdminUser && activeTab !== 'settings') return null;
-
+              // No group-level exclusion, we will do fine-grained link filtering instead
               return (
                 <div key={group.group_title} className="space-y-1">
                   <span className="text-[9px] pl-3.5 uppercase font-extrabold text-emerald-300 tracking-widest block opacity-92">
@@ -547,6 +545,11 @@ export default function App() {
                   </span>
                   <div className="space-y-0.5">
                     {group.links.map((link) => {
+                      // Fine-grained role filter: hide integrations & billing/subscriptions from non-admins
+                      if (!isAdminUser && (link.id === 'billing-subscriptions' || link.id === 'integrations')) {
+                        return null;
+                      }
+
                       const isActive = activeTab === link.id || 
                         (link.id === 'clinic-desk-appointments' && activeTab === 'clinic-desk-appointments') ||
                         (link.id === 'clinic-desk-consults' && activeTab === 'clinic-desk-consults');
@@ -1093,7 +1096,25 @@ export default function App() {
 
                 {/* View 14: Settings and Workspace management */}
                 {activeTab === 'settings' && (
-                  <SettingsPanel />
+                  <SettingsPanel 
+                    pharmacyId={selectedPharmacyId}
+                    currentPharmacyName={selectedPharmacy?.pharmacy_name}
+                    currentPhoneNumber={selectedPharmacy?.phone_number}
+                    currentAddress={selectedPharmacy?.address}
+                    onBrandingSave={(brandData) => {
+                      if (selectedPharmacy) {
+                        const updated = { 
+                          ...selectedPharmacy, 
+                          pharmacy_name: brandData.name, 
+                          phone_number: brandData.phone,
+                          address: brandData.address,
+                        };
+                        setSelectedPharmacy(updated);
+                        setPharmacies(prev => prev.map(p => p.pharmacy_id === updated.pharmacy_id ? updated : p));
+                      }
+                    }}
+                    showGlobalToast={showToast}
+                  />
                 )}
 
                 {/* View 15: Admin Panel control multi-branch tenant database */}
