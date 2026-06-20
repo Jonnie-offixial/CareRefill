@@ -236,15 +236,14 @@ export default function MvpRoadmap({ patients = [], showToast }: MvpRoadmapProps
       </div>
 
       {/* Ribbon Roadmap Subtabs */}
-      <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-slate-950/45 p-1 rounded-2xl border border-gray-100 dark:border-slate-850">
+      <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-[#1e293b]/45 p-1 rounded-2xl border border-gray-100 dark:border-slate-800">
         {[
           { id: 'voice', label: 'Voice Call Reminders 📞', icon: PhoneCall },
           { id: 'messages', label: 'AI Messages Desk ✉️', icon: MessageSquare },
           { id: 'alerts', label: 'AI Alerts Hub ⚠️', icon: AlertTriangle },
           { id: 'risk', label: 'AI Risk Index 🛡️', icon: ShieldAlert },
-          { id: 'payments', label: 'Mobile Payments & Billing 💳', icon: CreditCard },
           { id: 'forecasting', label: 'Inventory Forecasting 📈', icon: TrendingUp },
-          { id: 'reports', label: 'Regional Analytics 📊', icon: BarChart3 }
+          { id: 'reports', label: 'Compliance Reports 📊', icon: BarChart3 }
         ].map((tab) => {
           const isSelected = activeRoadmapSubTab === tab.id;
           return (

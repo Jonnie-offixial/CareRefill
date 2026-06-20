@@ -23,6 +23,7 @@ import SettingsPanel from './components/SettingsPanel';
 import IntegrationsHub from './components/IntegrationsHub';
 import MvpRoadmap from './components/MvpRoadmap';
 import LaunchPage from './components/LaunchPage';
+import ExecutiveDashboard from './components/ExecutiveDashboard';
 
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -33,6 +34,8 @@ import {
   CalendarDays, 
   ShieldAlert, 
   Shield,
+  CreditCard,
+  BarChart3,
   CheckCircle,
   Clock, 
   Sparkles, 
@@ -92,13 +95,22 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
 
   // Navigation tab selections matching the sidebar categories
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('executive');
 
   // Mobile sidebar menu sliding overlay drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Simulation parameters reference Clock
-  const [simulationDate, setSimulationDate] = useState<string>('2026-06-12');
+  // Real world ticking clock
+  const [realTime, setRealTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRealTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Simulation parameters reference Clock - now matching today's system date dynamically
+  const [simulationDate, setSimulationDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
   // Core entities
   const [patients, setPatients] = useState<(Patient & { medication: Medication | null })[]>([]);
@@ -421,8 +433,10 @@ export default function App() {
     {
       group_title: 'Overview',
       links: [
+        { id: 'executive', label: 'Executive Dashboard 🏢', icon: Building2 },
         { id: 'dashboard', label: 'Dashboard', icon: Clock },
-        { id: 'analytics', label: 'Analytics', icon: TrendingUp }
+        { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+        { id: 'regional-analytics', label: 'Regional Analytics 📊', icon: BarChart3 }
       ]
     },
     {
@@ -447,15 +461,16 @@ export default function App() {
       group_title: 'Clinical Workspace',
       links: [
         { id: 'clinic-desk-appointments', label: 'Appointments Book', icon: Calendar },
-        { id: 'mvp-roadmap', label: 'MVP+ Roadmap 🚀', icon: Sparkles },
-        { id: 'facility-info', label: 'Branch Doctors', icon: Building2 }
+        { id: 'care-desk', label: 'Care Desk 🏥', icon: Sparkles },
+        { id: 'facility-info', label: 'Branch Doctors', icon: Users }
       ]
     },
     {
       group_title: 'SaaS Platform',
       links: [
+        { id: 'billing-subscriptions', label: 'Subscriptions & Billing 💳', icon: CreditCard },
         { id: 'integrations', label: 'Integrations Link', icon: Database },
-        { id: 'settings', label: 'Settings Panel', icon: Settings }
+        { id: 'settings', label: 'Workspace Settings ⚙️', icon: Settings }
       ]
     }
   ];
@@ -634,19 +649,16 @@ export default function App() {
             </p>
           </div>
 
-          {/* Reference Clock adjustment layout widget */}
+          {/* Real world system clock widget */}
           <div className="flex items-center gap-3">
             
-            <div className="bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/60 p-2 rounded-2xl flex items-center gap-2.5 shadow-2xs">
+            <div className="bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/60 px-3 py-2 rounded-2xl flex items-center gap-2.5 shadow-2xs">
               <CalendarDays className="w-4 h-4 text-brand-green" />
-              <div className="text-left">
-                <span className="text-[8px] text-gray-400 block font-bold leading-none uppercase">Simulation Reference Clock</span>
-                <input 
-                  type="date" 
-                  value={simulationDate}
-                  onChange={(e) => setSimulationDate(e.target.value)}
-                  className="bg-transparent border-none text-[11px] font-black tracking-wider text-brand-green font-mono focus:outline-none focus:ring-0 p-0 m-0"
-                />
+              <div className="text-left font-sans">
+                <span className="text-[8px] text-gray-400 block font-bold leading-none uppercase">Real-World Date &amp; Time</span>
+                <span className="text-[11px] font-black tracking-wider text-brand-green font-mono block">
+                  {realTime.toLocaleDateString()} {realTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
               </div>
             </div>
 
@@ -825,8 +837,192 @@ export default function App() {
                   />
                 )}
 
-                {/* View 12: MVP+ Roadmap high fidelity implementation */}
-                {activeTab === 'mvp-roadmap' && (
+                {/* View 12a: High-fidelity Executive Corporate Dashboard */}
+                {activeTab === 'executive' && (
+                  <ExecutiveDashboard
+                    currentPharmacyId={selectedPharmacyId}
+                    onSelectPharmacy={(id) => {
+                      setSelectedPharmacyId(id);
+                      fetchTenantData(id);
+                    }}
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 12b: Billing, Subscriptions & Mobile Money Payouts Panel */}
+                {activeTab === 'billing-subscriptions' && (
+                  <div className="bg-white rounded-3xl border border-gray-150 p-8 shadow-xs space-y-8 text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-brand-green font-bold text-xs uppercase tracking-wider">
+                          <CreditCard className="w-4 h-4" /> Platform Finance Gateway
+                        </div>
+                        <h3 className="text-xl font-black text-gray-950 font-sans tracking-tight">Subscriptions &amp; Corporate Billing Logs</h3>
+                        <p className="text-xs text-gray-400">Configure pharmacy software licensing, map SMS/WhatsApp bundles, and process mobile cashouts.</p>
+                      </div>
+                      <div className="bg-[#F4FCE3] border border-[#84CC16]/20 px-3 py-1.5 rounded-xl font-bold text-xs text-[#71B20A] tracking-wide shrink-0">
+                        Corporate Standing: ACTIVE
+                      </div>
+                    </div>
+
+                    {/* Subscription billing options cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="border border-slate-150 p-6 rounded-2xl space-y-4 bg-slate-50 relative overflow-hidden flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <span className="text-[9px] font-black uppercase text-brand-green">Tier 1</span>
+                          <h4 className="text-sm font-bold text-gray-900">Community Pharmacy</h4>
+                          <p className="text-xs text-gray-500">For individual single branch clinics and drug stores.</p>
+                          <p className="text-xl font-black text-slate-800 pt-2">UGX 150,500 <span className="text-xs font-normal text-gray-400">/ month</span></p>
+                        </div>
+                        <button 
+                          onClick={() => showToast("Upgrade Requested", "A platform representative will contact your City branch.", "info")}
+                          className="w-full bg-slate-800 hover:bg-slate-705 p-2 rounded-xl text-xs font-extrabold text-white text-center cursor-pointer mt-4"
+                        >
+                          Downgrade to Standard
+                        </button>
+                      </div>
+
+                      <div className="border-2 border-emerald-500 p-6 rounded-2xl space-y-4 bg-emerald-50/10 relative overflow-hidden flex flex-col justify-between shadow-2xs">
+                        <div className="absolute right-0 top-0 bg-emerald-500 text-white text-[9px] font-black uppercase px-2.5 py-1 rounded-bl-xl tracking-wider">
+                          Active Branch Tier
+                        </div>
+                        <div className="space-y-2">
+                          <span className="text-[9px] font-black uppercase text-teal-700">Tier 2</span>
+                          <h4 className="text-sm font-bold text-slate-900">Regional Chain Care</h4>
+                          <p className="text-xs text-gray-500">Supports up to 5 enterprise branches + advanced analytics.</p>
+                          <p className="text-xl font-black text-emerald-800 pt-2">UGX 380,000 <span className="text-xs font-normal text-gray-400">/ month</span></p>
+                        </div>
+                        <button 
+                          disabled
+                          className="w-full bg-emerald-500/10 text-emerald-700 border border-emerald-300 p-2 rounded-xl text-xs font-bold text-center mt-4"
+                        >
+                          Current Subscription active
+                        </button>
+                      </div>
+
+                      <div className="border border-slate-150 p-6 rounded-2xl space-y-4 bg-slate-50 relative overflow-hidden flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <span className="text-[9px] font-black uppercase text-brand-green">Tier 3</span>
+                          <h4 className="text-sm font-bold text-gray-900">Enterprise Corporate Group</h4>
+                          <p className="text-xs text-gray-500">Unlimited national branches, multi-tenant locks, API gateways.</p>
+                          <p className="text-xl font-black text-slate-850 pt-2">Custom Quote <span className="text-xs font-normal text-gray-400">/ year</span></p>
+                        </div>
+                        <button 
+                          onClick={() => showToast("Enterprise Proposal Sent", "Enterprise specialist assigned. Check your registered clinical email shortly.", "success")}
+                          className="w-full bg-[#84CC16] hover:bg-[#71B20A] p-2 rounded-xl text-xs font-extrabold text-white text-center cursor-pointer mt-4"
+                        >
+                          Contact Enterprise Desk
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Ugandan payment options selection and mobile money payment simulator */}
+                    <div className="border-t border-slate-100 pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider">Dynamic Payout Configuration</h4>
+                        <p className="text-xs text-gray-500">
+                          Toggle or register local East African payment networks to accept bulk patient mobile deposits or automatically handle clinician fee balances.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 bg-slate-50 border rounded-xl flex items-center justify-between">
+                            <span className="font-bold text-xs text-gray-800">MTN Mobile Money</span>
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                          </div>
+                          <div className="p-3 bg-slate-50 border rounded-xl flex items-center justify-between">
+                            <span className="font-bold text-xs text-gray-800">Airtel Pay Portal</span>
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 p-5 rounded-2xl border space-y-3">
+                        <span className="text-[9px] font-black uppercase text-slate-400">Ugandan Wallet Simulator</span>
+                        <h5 className="text-xs font-bold text-slate-800">Simulate Test Mobile Checkout</h5>
+                        <div className="space-y-2">
+                          <input 
+                            type="text" 
+                            placeholder="+256 701 445588" 
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none" 
+                          />
+                          <button
+                            onClick={() => {
+                              showToast("Transaction Dispatched", "Test checkout notification pushed! Check simulated MTN/Airtel response.", "success");
+                            }}
+                            className="w-full bg-brand-green hover:bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider py-2 rounded-xl cursor-pointer"
+                          >
+                            Dispatch UGX 10,000 Push Log
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* View 12c: High-fidelity Regional Analytics & Uganda Map Center */}
+                {activeTab === 'regional-analytics' && (
+                  <div className="bg-white rounded-3xl border border-gray-150 p-8 shadow-xs space-y-8 text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-brand-green font-bold text-xs uppercase tracking-wider">
+                          <BarChart3 className="w-4 h-4" /> Regional Compliance Intelligence
+                        </div>
+                        <h3 className="text-xl font-black text-gray-950 font-sans tracking-tight">Enterprise Uganda Regional Analytics</h3>
+                        <p className="text-xs text-gray-400">View real-time district statistics, reminder effectiveness logs, and regional adherence indexes.</p>
+                      </div>
+                    </div>
+
+                    {/* Regional Grid analytics list representing branches */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="border border-slate-150 rounded-2xl p-6 bg-slate-50/50 space-y-4">
+                        <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider">Active Regional Adherence indices</h4>
+                        <div className="space-y-4">
+                          {[
+                            { district: "Kampala Central Road Zone (Branch A)", index: 92, status: "EXCELLENT", color: "bg-emerald-500" },
+                            { district: "Arua West Nile Division (Branch B)", index: 78, status: "ATTENTION", color: "bg-amber-500" },
+                            { district: "Mbale Bugisu High Area (Branch C)", index: 85, status: "STABLE", color: "bg-[#84CC16]" },
+                            { district: "Gulu Acholi Northern Hub (Branch D)", index: 68, status: "CRITICAL ALERT", color: "bg-rose-500" }
+                          ].map((reg, idx) => (
+                            <div key={idx} className="space-y-1.5">
+                              <div className="flex justify-between text-xs font-bold text-slate-800">
+                                <span>{reg.district}</span>
+                                <span>{reg.index}% Adherence ({reg.status})</span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div className={`h-full ${reg.color} rounded-full`} style={{ width: `${reg.index}%` }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Diagnostic Summary */}
+                      <div className="bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
+                        <div className="space-y-3">
+                          <span className="text-[10px] font-black uppercase text-[#84CC16] tracking-wider block font-mono">Statistical Insights</span>
+                          <h4 className="text-md font-bold tracking-tight">Pre-emptive SMS / WA Impacts in Uganda</h4>
+                          <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                            National adherence tracking shows that over 40% of patients skip essential anti-hypertensive cycle treatments because of travel cost or simple forgetfulness. 
+                            CareRefill automatons reduce this margin significantly down by 22% in Kampala and 18% in Eastern Mbale district branches.
+                          </p>
+                        </div>
+                        <div className="pt-4 border-t border-slate-800 mt-6 flex justify-between items-center">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-[#84CC16]">Data Feed: REALTIME</span>
+                          <button
+                            onClick={() => {
+                              showToast("Exporting National Report", "Compiling compiled PDF sheets of East Africa indexes...", "success");
+                            }}
+                            className="bg-brand-green hover:bg-emerald-600 font-extrabold text-[10px] uppercase text-white px-3.5 py-2 rounded-xl transition cursor-pointer"
+                          >
+                            Export Comprehensive Audit Logs
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* View 12d: Rename MVP+ Roadmap Tab to Care Desk */}
+                {activeTab === 'care-desk' && (
                   <MvpRoadmap
                     patients={patients.map(p => ({
                       patient_id: p.patient_id,

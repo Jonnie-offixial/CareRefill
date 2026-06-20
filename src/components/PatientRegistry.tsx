@@ -21,9 +21,43 @@ export default function PatientRegistry({
   const [search, setSearch] = useState('');
   const [filterCondition, setFilterCondition] = useState('All');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showBulkHub, setShowBulkHub] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  const handleDownloadCSVTemplate = () => {
+    const headers = [
+      "Full Name",
+      "Phone Number",
+      "Chronic Condition",
+      "Preferred Channel",
+      "Medication Name",
+      "Dosage",
+      "Duration (Days)",
+      "Last Refill Date"
+    ];
+    const rows = [
+      ["Grace Nakamya", "+256 701 111 222", "Diabetes", "WhatsApp", "Metformin 850mg", "1 tablet daily", "30", "2026-06-05"],
+      ["Peter Wanyama", "+256 772 333 444", "Hypertension", "SMS", "Amlodipine 10mg", "1 tablet morning/evening", "60", "2026-06-08"],
+      ["Mary Achiro", "+256 752 988 111", "Asthma", "Both", "Salbutamol Inhaler", "2 puffs twice daily", "90", "2026-06-01"]
+    ];
+
+    const csvContent = "\uFEFF" + [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "carerefill_bulk_patients_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleExportCSV = () => {
     const headers = [
@@ -65,12 +99,9 @@ export default function PatientRegistry({
     document.body.removeChild(link);
   };
 
-  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFileRaw = async (file: File) => {
     setImporting(true);
-    setImportStatus("Importing CSV...");
+    setImportStatus("Importing CSV list...");
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -275,7 +306,6 @@ export default function PatientRegistry({
       } finally {
         setImporting(false);
         setImportStatus(null);
-        e.target.value = '';
       }
     };
 
@@ -286,6 +316,31 @@ export default function PatientRegistry({
     };
 
     reader.readAsText(file);
+  };
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFileRaw(file);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDropFile = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processFileRaw(file);
+    }
   };
 
   // Form State
@@ -572,28 +627,26 @@ export default function PatientRegistry({
         
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={handleExportCSV}
+            onClick={() => {
+              setShowBulkHub(!showBulkHub);
+              if (showAddForm) setShowAddForm(false);
+            }}
             type="button"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-3xs border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-3xs border ${
+              showBulkHub 
+                ? 'bg-teal-50 border-teal-200 text-teal-800' 
+                : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+            } focus:outline-none cursor-pointer`}
           >
-            <Download className="w-4 h-4 text-gray-500" />
-            Export CSV
+            <Upload className="w-4 h-4 text-teal-600" />
+            Bulk Excel Hub
           </button>
-
-          <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-3xs border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer">
-            <Upload className="w-4 h-4 text-gray-500" />
-            <span>{importing ? importStatus || "Importing..." : "Import CSV"}</span>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleImportCSV}
-              disabled={importing}
-              className="hidden"
-            />
-          </label>
           
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              if (showBulkHub) setShowBulkHub(false);
+            }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-xs ${getThemeColorClass()}`}
           >
             <Plus className="w-4 h-4" />
@@ -603,6 +656,102 @@ export default function PatientRegistry({
       </div>
 
       <AnimatePresence>
+        {showBulkHub && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden border-b border-gray-100 pb-6 mb-6"
+          >
+            <div className="bg-slate-50 dark:bg-slate-950/20 border rounded-2xl p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left Column: Drag & Drop Area */}
+              <div 
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDropFile}
+                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer min-h-[180px] ${
+                  isDragOver 
+                    ? 'border-brand-green bg-emerald-50/40 scale-[1.01]' 
+                    : 'border-slate-200 bg-white hover:border-gray-300'
+                }`}
+                onClick={() => document.getElementById('drag-drop-file-input')?.click()}
+              >
+                <input 
+                  id="drag-drop-file-input"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImportCSV}
+                  disabled={importing}
+                  className="hidden"
+                />
+                
+                {importing ? (
+                  <div className="space-y-2">
+                    <RefreshCw className="w-8 h-8 text-brand-green animate-spin mx-auto animate-duration-1000" />
+                    <p className="text-xs font-bold text-gray-800">{importStatus || "Processing registers..."}</p>
+                    <p className="text-[10px] text-gray-500">Executing database insertions one-by-one</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-teal-50 rounded-full inline-block">
+                      <Upload className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-800">Drag &amp; Drop Excel CSV file here</p>
+                      <p className="text-[10px] text-gray-450 mt-1">or click to browse local computer files</p>
+                    </div>
+                    <span className="inline-block px-2.5 py-1 bg-teal-50 text-[10px] font-bold text-teal-700 rounded-md uppercase tracking-wider font-mono">
+                      Accepts: .csv / excel-csv
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Template and instructions info */}
+              <div className="space-y-4 text-xs">
+                <div>
+                  <h4 className="font-extrabold text-slate-800 uppercase tracking-widest text-[10px] mb-1">Standard Patient Format Guide</h4>
+                  <p className="text-gray-500 text-[11px]">
+                    To successfully import, your headers should match standard customer keys. Excel sheet CSV imports automatically match column synonyms.
+                  </p>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl border space-y-1">
+                  <span className="block font-bold text-gray-500 text-[9px] uppercase tracking-wider">Synonyms &amp; Headers List:</span>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono text-gray-600">
+                    <div>• Full Name <span className="text-gray-400 font-sans">(name)</span></div>
+                    <div>• Phone <span className="text-gray-400 font-sans">(contact)</span></div>
+                    <div>• Chronic Condition</div>
+                    <div>• Preferred Channel</div>
+                    <div>• Medication Name</div>
+                    <div>• Dosage</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadCSVTemplate}
+                    className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] transition cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download Excel Template
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-1 px-3 py-2 border rounded-lg bg-white hover:bg-slate-55 shadow-3xs hover:bg-gray-50 text-slate-800 font-bold text-[11px] transition cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-gray-400" /> Export Active Registry
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+
         {showAddForm && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
