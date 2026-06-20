@@ -14,6 +14,7 @@ import CommunicationsModule from './components/CommunicationsModule';
 import AnalyticsModule from './components/AnalyticsModule';
 import SupportModule from './components/SupportModule';
 import SettingsModule from './components/SettingsModule';
+import BillingModule from './components/BillingModule';
 import TalkWithUsFab from './components/TalkWithUsFab';
 import LaunchPage from './components/LaunchPage';
 import RoleActorLogin from './components/RoleActorLogin';
@@ -50,6 +51,7 @@ import {
   LogOut,
   Menu,
   X,
+  Receipt,
   MapPin,
   Flame,
   Search,
@@ -479,6 +481,7 @@ export default function App() {
         { id: 'medications', label: 'Medications', icon: Sparkles },
         { id: 'refill-requests', label: 'Refill Requests', icon: Activity },
         { id: 'orders', label: 'Orders', icon: CreditCard },
+        { id: 'billing', label: 'Subscriptions & Billing', icon: Receipt },
         { id: 'communications', label: 'Communications', icon: MessageSquare },
         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
         { id: 'support', label: 'Support', icon: HelpCircle },
@@ -817,6 +820,13 @@ export default function App() {
                 {/* View 7: Orders Module */}
                 {activeTab === 'orders' && (
                   <OrdersModule
+                    showToast={showToast}
+                  />
+                )}
+
+                {/* View 7a: Subscriptions & Billing Module */}
+                {activeTab === 'billing' && (
+                  <BillingModule
                     showToast={showToast}
                   />
                 )}
